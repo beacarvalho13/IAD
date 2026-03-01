@@ -8,10 +8,21 @@ void setup() {
 
 void loop() {
 
-  val = analogRead(inputPin);
+  if (Serial.available() > 0){
 
-  Serial.println(val);
+    String command = Serial.readStringUntil('\n');
+    command.trim();
 
-  delay(1000);
+    if (command == "MEASURE"){
 
+      val = analogRead(inputPin);
+      Serial.println(val);
+    }
+
+    else {
+
+      Serial.print("ERROR");
+
+    }
+  }
 }

@@ -4,11 +4,7 @@ import serial
 
 app = QApplication([])
 
-ser = serial.Serial(
-    port='COM6', 
-    baudrate=9600,
-    timeout=1
-)
+ser = serial.Serial('COM6', 9600, timeout=1)
 
 # Major functions
 
@@ -38,7 +34,7 @@ def start_clicked():
 
 def stop_clicked():
     print("Stop button clicked!")
-    timer1 .stop()
+    timer1.stop()
     timer2.stop()
 
 def send_command_clicked():
@@ -68,4 +64,6 @@ botao3.show()
 
 janela.show()
  
-app.exec_()  
+app.exec_() 
+
+ser.close()
