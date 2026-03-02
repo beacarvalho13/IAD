@@ -1,9 +1,11 @@
 int hallPin = A0;
 int val;
+float voltage;
+float tesla;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(inputPin, INPUT);
+  pinMode(hallPin, INPUT);
 }
 
 void loop() {
@@ -32,4 +34,6 @@ void loop() {
 
     }
   }
+
+  delay(5000);
 }
