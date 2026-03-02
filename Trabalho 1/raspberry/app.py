@@ -6,7 +6,7 @@ import time
 
 app = QApplication([])
 
-#ser = serial.Serial('COM6', 9600, timeout=1)
+ser = serial.Serial('COM6', 9600, timeout=1)
 
 global magnitude_data 
 magnitude_data = []
@@ -17,7 +17,6 @@ time_data = []
 
 # Major functions
 
-"""
 def send_command():
     command = "MEASURE\n"
     ser.write(command.encode())
@@ -32,14 +31,12 @@ def read_message():
         print("Message received:", message)
 
         plot_time_series()
-        
-"""
 
 timer1 = QTimer()
-#timer1.timeout.connect(send_command)
+timer1.timeout.connect(send_command)
 
 timer2 = QTimer()
-#timer2.timeout.connect(read_message)
+timer2.timeout.connect(read_message)
 
 # Funções para os botões
 
@@ -103,5 +100,5 @@ plot_time_series()
  
 app.exec_() 
 
-#ser.close()
+ser.close()
 
