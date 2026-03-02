@@ -1,4 +1,4 @@
-int inputPin = A0;
+int hallPin = A0;
 int val;
 
 void setup() {
@@ -15,8 +15,15 @@ void loop() {
 
     if (command == "MEASURE"){
 
-      val = analogRead(inputPin);
+      val = analogRead(hallPin);
       Serial.println(val);
+
+      voltage = val * (5.0 / 1023.0);
+      Serial.println(voltage);
+
+      tesla = (voltage - 2.5)/ 0.018;
+      Serial.println(tesla);
+
     }
 
     else {

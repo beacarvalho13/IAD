@@ -1,10 +1,19 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtCore import QTimer
 import serial
+import pyqtgraph as pg
+import time
 
 app = QApplication([])
 
 ser = serial.Serial('COM6', 9600, timeout=1)
+
+global magnitude_data 
+magnitude_data = []
+
+global time_data 
+time_data = []
+
 
 # Major functions
 
@@ -16,7 +25,11 @@ def send_command():
 def read_message():
     if ser.in_waiting > 0:
         message = ser.readline().decode().strip()
+        magnitude_data.append(float(message))
+
+        time_data.append(time.time() - start_time)
         print("Message received:", message)
+        
 
 timer1 = QTimer()
 timer1.timeout.connect(send_command)
@@ -28,6 +41,8 @@ timer2.timeout.connect(read_message)
 
 def start_clicked():
     print("Start button clicked!")
+    global start_time
+    start_time = time.time()
     timer1.start(2000)
     timer2.start(2000)
 
@@ -67,3 +82,14 @@ janela.show()
 app.exec_() 
 
 ser.close()
+
+
+# Pyqtgraph
+
+plt = pg.plot(title="Real-time Data")
+
+plt.showGrid(x=True, y=True)
+plt.setLabel('left', 'Magnitude', units='T')
+plt.setLabel('bottom', 'Time', units='s')
+
+plt.setWindowTitle("Real-time Data Plot")
