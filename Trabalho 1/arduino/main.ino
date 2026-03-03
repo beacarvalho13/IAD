@@ -6,12 +6,6 @@ float tesla;
 void setup() {
   Serial.begin(9600);
   pinMode(hallPin, INPUT);
-
-  if (estado == HIGH) {
-      Serial.println("Connection established");
-    } else {
-      Serial.println("No connection");
-    }
 }
 
 void loop() {
