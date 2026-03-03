@@ -28,6 +28,10 @@ class MyWindow(QMainWindow):
 
         # Serial
         self.ser = serial.Serial('COM6', 9600, timeout=1)
+        if self.ser and self.ser.is_open:
+            self.output_window.append("Successful connection to port")
+        else:
+            self.output_window.append("Unable to connect to port")
 
         # Data storage
         self.magnitude_data = []
@@ -108,14 +112,21 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
+        if self.ser and self.ser.is_open:
+            self.output_window.append("Serial port is open.")
+        if self.ser.out_waiting == 0:
+            self.output_window.append("Output buffer is empty. Sending command...")
         command = "MEASURE\n"
         self.ser.write(command.encode())
-        print("Command sent:", command.strip())
+        self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
+        if self.ser and self.ser.is_open:
+            self.output_window.append("Serial port is open.")
         if self.ser.in_waiting > 0:
             message = self.ser.readline().decode().strip()
             try:
+                self.output_window.append("Data available in input buffer. Reading...")
                 value = float(message)
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
@@ -130,7 +141,11 @@ class MyWindow(QMainWindow):
     def update_data(self):
         self.send_command()
         self.read_message()
+        if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
+            self.output_window.append("INFO: No data to plot yet.")
         self.curve.setData(self.time_data, self.magnitude_data)
+    # Note: if the plot is updating too quickly, reduce the timer interval
+
 
     # -----------------------------
     # Button handlers
@@ -173,6 +188,8 @@ class MyWindow(QMainWindow):
 
     def start_clicked(self):
         self.output_window.append("Start button clicked!")
+        if self.timer.isActive():
+            self.output_window.append("INFO: System is already running.")
         self.start_time = time.time()
         self.timer.start(self.interval) 
 
@@ -182,6 +199,8 @@ class MyWindow(QMainWindow):
         self.update_data()
 
     def stop_clicked(self):
+        if self.timer.isActive():
+            self.output_window.append("INFO: System is already stopped.")
         self.output_window.append("Stop button clicked!")
         self.timer.stop()
     
@@ -194,7 +213,9 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def closeEvent(self, event):
-        #self.ser.close()
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+            self.output_window.append("Serial port closed safely.")
         event.accept()
 
 
