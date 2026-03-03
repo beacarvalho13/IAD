@@ -105,7 +105,13 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         # Create curve
-        self.curve = self.plot_widget.plot(pen='p', symbol='o')
+        self.curve = self.plot_widget.plot(
+            pen=pg.mkPen(color="#FA7AB7", width=2),   # line
+            symbol='o',
+            symbolSize=10,
+            symbolBrush=pg.mkBrush(color='#FA7AB7'),                    # dot fill
+            symbolPen=pg.mkPen(color='#FA7AB7', width=2)     # dot outline
+        )
 
     # -----------------------------
     # Serial communication
