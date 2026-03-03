@@ -27,7 +27,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.output_window)
 
         # Serial
-        self.ser = serial.Serial('COM6', 9600, timeout=1)
+        #self.ser = serial.Serial('COM6', 9600, timeout=1)
 
         # Data storage
         self.magnitude_data = []
@@ -108,9 +108,13 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        command = "MEASURE\n"
-        self.ser.write(command.encode())
-        print("Command sent:", command.strip())
+        if self.ser and self.ser.is_open:
+            self.output_window.append("Serial port is open.")
+        if self.ser.out_waiting == 0:
+            self.output_window.append("Output buffer is empty. Sending command...")
+            command = "MEASURE\n"
+            self.ser.write(command.encode())
+            self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
         if self.ser.in_waiting > 0:
