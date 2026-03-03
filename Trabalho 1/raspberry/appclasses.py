@@ -29,6 +29,8 @@ class MyWindow(QMainWindow):
 
         # Start time
         self.start_time = None
+
+        self.interval = 2000  
         
         # -----------------------------
         # Buttons and plot setup
@@ -44,6 +46,7 @@ class MyWindow(QMainWindow):
 
         self.interval_definer.setFixedHeight(50)
         self.layout.addWidget(self.interval_definer)
+        self.interval_definer.currentTextChanged.connect(self.text_changed )
 
         # Help button
         self.help_button = QPushButton("Help Window")
@@ -116,16 +119,12 @@ class MyWindow(QMainWindow):
 
     # -----------------------------
     # Button handlers
-    # -----------------------------
-
-    def start_clicked(self):
-        print("Start button clicked!")
-        self.start_time = time.time()
-        self.timer.start(2000)  # 2 seconds
-
-    def stop_clicked(self):
-        print("Stop button clicked!")
-        self.timer.stop()
+    # ----------------------
+    
+    def text_changed(self, text):
+        self.interval = int(text.strip().split()[0]) * 1000  # Convert to milliseconds
+        self.timer.setInterval(self.interval)
+        print(f"Interval set to: {self.interval} ms")
 
     def open_help_window(self):
         self.help_window = QWidget()
@@ -140,6 +139,18 @@ class MyWindow(QMainWindow):
 
         self.help_window.show()
 
+    def start_clicked(self):
+        print("Start button clicked!")
+        self.start_time = time.time()
+        self.timer.start(self.internal)  # 2 seconds
+
+    def stop_clicked(self):
+        print("Stop button clicked!")
+        self.timer.stop()
+    
+    def send_command_clicked(self):
+        print("Send Command button clicked!") 
+        self.send_command()
 
     # -----------------------------
     # Close properly
