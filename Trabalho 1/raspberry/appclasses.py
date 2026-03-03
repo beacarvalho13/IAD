@@ -118,21 +118,21 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        if self.ser and self.ser.is_open:
-            self.output_window.append("Serial port is open.")
-        if self.ser.out_waiting == 0:
-            self.output_window.append("Output buffer is empty. Sending command...")
+        #if self.ser and self.ser.is_open:
+            #self.output_window.append("Serial port is open.")
+        #if self.ser.out_waiting == 0:
+            #self.output_window.append("Output buffer is empty. Sending command...")
         command = "MEASURE\n"
         self.ser.write(command.encode())
         self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
-        if self.ser and self.ser.is_open:
-            self.output_window.append("Serial port is open.")
+        #if self.ser and self.ser.is_open:
+            #self.output_window.append("Serial port is open.")
         if self.ser.in_waiting > 0:
             message = self.ser.readline().decode().strip()
             try:
-                self.output_window.append("Data available in input buffer. Reading...")
+                #self.output_window.append("Data available in input buffer. Reading...")
                 value = float(message)
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
@@ -159,6 +159,11 @@ class MyWindow(QMainWindow):
     
     def run_background(self):
         self.output_window.append("Run background button clicked!")
+
+        self.magnitude_data.clear()
+        self.time_data.clear()
+        self.update_data()
+
         self.start_time = time.time()
         self.timer.start(self.interval)
 
@@ -175,7 +180,7 @@ class MyWindow(QMainWindow):
         self.background_time_data = self.time_data.copy()
     
     def text_changed(self, text):
-        self.interval = int(text.strip().split()[0]) * 1000  # Convert to milliseconds
+        self.interval = int(text.strip().split()[0]) * 1000 
         self.timer.setInterval(self.interval)
         self.output_window.append(f"Interval set to: {self.interval} ms")
 
