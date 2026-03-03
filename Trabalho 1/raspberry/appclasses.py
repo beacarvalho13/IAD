@@ -212,7 +212,7 @@ class MyWindow(QMainWindow):
     
     def send_command_clicked(self):
         self.output_window.append("Send Command button clicked!") 
-        self.send_command()
+        self.update_data()
 
     # -----------------------------
     # Close properly
