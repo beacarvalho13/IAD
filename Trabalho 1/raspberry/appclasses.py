@@ -27,7 +27,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.output_window)
 
         # Serial
-        self.ser = serial.Serial('COM6', 9600, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port")
         else:
@@ -133,11 +133,13 @@ class MyWindow(QMainWindow):
             message = self.ser.readline().decode().strip()
             try:
                 self.output_window.append("Data available in input buffer. Reading...")
-                if "Gaussians:" in message:
-                    value = float(message.split("Gaussians:")[1].strip())
-                    self.magnitude_data.append(value)
-                    self.time_data.append(time.time() - self.start_time)
-                    self.output_window.append(f"Message received: {value}")
+                parts = message.split('|')
+                last_part = parts[-1].split(':')[-1].strip()
+                value = float(last_part)
+                
+                self.magnitude_data.append(value)
+                self.time_data.append(time.time() - self.start_time)
+                self.output_window.append(f"Message received: {value}")
             except (ValueError, IndexError):
                 self.output_window.append(f"Invalid data: {message}")
 
