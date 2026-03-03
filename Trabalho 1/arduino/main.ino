@@ -29,32 +29,10 @@ void loop() {
 
       tesla = (voltage - 2.5)/ 0.018;
 
-      Serial.print("Raw: ");
-      Serial.print(val);
-      Serial.print(" | Volts: ");
-      Serial.print(voltage);
-      Serial.print(" | Tesla: ");
       Serial.println(tesla);
 
-      if (val == 0 || val == 1023) {
-        Serial.print("WARNING: Pin reading extreme value (");
-        Serial.print(val);
-        Serial.println("). Check sensor connection.");
-
-    }
-
-    if (command.length() == 0) {
-      Serial.println("ERROR: Empty command received.");
-    }
-
-    else {
-
-      Serial.print("ERROR");
-      Serial.println(command);
-
-    }
   }
 
-  delay(5000);
+  delay(100);
   }
 }

@@ -133,14 +133,11 @@ class MyWindow(QMainWindow):
             message = self.ser.readline().decode().strip()
             try:
                 self.output_window.append("Data available in input buffer. Reading...")
-                parts = message.split('|')
-                last_part = parts[-1].split(':')[-1].strip()
-                value = float(last_part)
-                
+                value = float(message)
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
-                self.output_window.append(f"Message received: {value}")
-            except (ValueError, IndexError):
+                self.output_window.append(f"Message received: {message}")
+            except ValueError:
                 self.output_window.append(f"Invalid data: {message}")
 
     # -----------------------------
