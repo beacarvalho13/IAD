@@ -133,11 +133,12 @@ class MyWindow(QMainWindow):
             message = self.ser.readline().decode().strip()
             try:
                 self.output_window.append("Data available in input buffer. Reading...")
-                value = float(message)
-                self.magnitude_data.append(value)
-                self.time_data.append(time.time() - self.start_time)
-                self.output_window.append(f"Message received: {message}")
-            except ValueError:
+                if "Gaussians:" in message:
+                    value = float(message.split("Gaussians:")[1].strip())
+                    self.magnitude_data.append(value)
+                    self.time_data.append(time.time() - self.start_time)
+                    self.output_window.append(f"Message received: {value}")
+            except (ValueError, IndexError):
                 self.output_window.append(f"Invalid data: {message}")
 
     # -----------------------------
@@ -205,7 +206,7 @@ class MyWindow(QMainWindow):
         self.update_data()
 
     def stop_clicked(self):
-        if self.timer.isActive():
+        if not self.timer.isActive():
             self.output_window.append("INFO: System is already stopped.")
         self.output_window.append("Stop button clicked!")
         self.timer.stop()
