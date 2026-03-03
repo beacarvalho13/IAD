@@ -3,7 +3,7 @@ import serial
 import pyqtgraph as pg
 import time
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QComboBox, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -33,6 +33,17 @@ class MyWindow(QMainWindow):
         # -----------------------------
         # Buttons and plot setup
         # -----------------------------
+
+        # Time Interval
+        self.interval_definer = QComboBox()
+        self.interval_definer.addItem(" 1 second")
+        self.interval_definer.addItem(" 2 seconds")
+        self.interval_definer.addItem(" 5 seconds")
+        self.interval_definer.addItem(" 10 seconds")
+        self.interval_definer.addItem(" 20 seconds")
+
+        self.interval_definer.setFixedHeight(50)
+        self.layout.addWidget(self.interval_definer)
 
         # Help button
         self.help_button = QPushButton("Help Window")
