@@ -124,7 +124,7 @@ class MyWindow(QMainWindow):
             #self.output_window.append("Output buffer is empty. Sending command...")
         command = "MEASURE\n"
         self.ser.write(command.encode())
-        self.output_window.append(f"Command sent: {command.strip()}")
+        #self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
         #if self.ser and self.ser.is_open:
@@ -178,6 +178,10 @@ class MyWindow(QMainWindow):
         
         self.background_magnitude_data = self.magnitude_data.copy()
         self.background_time_data = self.time_data.copy()
+
+        self.magnitude_data.clear()
+        self.time_data.clear()
+        self.update_data()
     
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000 
