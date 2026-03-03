@@ -1,9 +1,10 @@
 import sys
+from PyQt5 import QtWidgets
 import serial
 import pyqtgraph as pg
 import time
 
-from PyQt5.QtWidgets import QApplication, QComboBox, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QApplication, QComboBox, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -20,8 +21,12 @@ class MyWindow(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
 
+        # Output window
+        self.output_window = QtWidgets.QTextBrowser(self.central_widget)
+        self.layout.addWidget(self.output_window)
+
         # Serial
-        #self.ser = serial.Serial('COM6', 9600, timeout=1)
+        self.ser = serial.Serial('COM6', 9600, timeout=1)
 
         # Data storage
         self.magnitude_data = []
@@ -36,6 +41,11 @@ class MyWindow(QMainWindow):
         # Buttons and plot setup
         # -----------------------------
 
+        # Run Background button
+        self.background_button = QPushButton("Run Background")
+        self.layout.addWidget(self.background_button)
+        self.background_button.clicked.connect(self.run_background)
+        
         # Time Interval
         self.interval_definer = QComboBox()
         self.interval_definer.addItem(" 1 second")
@@ -86,7 +96,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         # Create curve
-        self.curve = self.plot_widget.plot(pen='p', symbol='o')
+        self.curve = self.plot_widget.plot(pen='FA7AB7', symbol='o')
 
     # -----------------------------
     # Serial communication
@@ -104,9 +114,9 @@ class MyWindow(QMainWindow):
                 value = float(message)
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
-                print("Message received:", message)
+                self.output_window.append(f"Message received: {message}")
             except ValueError:
-                print("Invalid data:", message)
+                self.output_window.append(f"Invalid data: {message}")
 
     # -----------------------------
     # Plot update
@@ -121,10 +131,16 @@ class MyWindow(QMainWindow):
     # Button handlers
     # ----------------------
     
+    def run_background(self):
+        self.output_window.append("Run Background button clicked!")
+        self.start_time = time.time()
+        self.timer.start(self.interval)  
+
+
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000  # Convert to milliseconds
         self.timer.setInterval(self.interval)
-        print(f"Interval set to: {self.interval} ms")
+        self.output_window.append(f"Interval set to: {self.interval} ms")
 
     def open_help_window(self):
         self.help_window = QWidget()
@@ -140,16 +156,21 @@ class MyWindow(QMainWindow):
         self.help_window.show()
 
     def start_clicked(self):
-        print("Start button clicked!")
+        self.output_window.append("Start button clicked!")
         self.start_time = time.time()
-        self.timer.start(self.internal)  # 2 seconds
+        self.timer.start(self.interval) 
+
+        # Clear previous data
+        self.magnitude_data.clear()
+        self.time_data.clear()
+        self.update_data()
 
     def stop_clicked(self):
-        print("Stop button clicked!")
+        self.output_window.append("Stop button clicked!")
         self.timer.stop()
     
     def send_command_clicked(self):
-        print("Send Command button clicked!") 
+        self.output_window.append("Send Command button clicked!") 
         self.send_command()
 
     # -----------------------------
@@ -157,7 +178,7 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def closeEvent(self, event):
-        #self.ser.close()
+        self.ser.close()
         event.accept()
 
 
