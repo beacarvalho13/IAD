@@ -1,4 +1,5 @@
 import sys
+from turtle import delay
 from PyQt5 import QtWidgets
 import serial
 import pyqtgraph as pg
@@ -31,6 +32,10 @@ class MyWindow(QMainWindow):
         # Data storage
         self.magnitude_data = []
         self.time_data = []
+
+        # Background storage
+        self.background_magnitude_data = []
+        self.background_time_data = []
 
         # Start time
         self.start_time = None
@@ -96,7 +101,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         # Create curve
-        self.curve = self.plot_widget.plot(pen='FA7AB7', symbol='o')
+        self.curve = self.plot_widget.plot(pen='p', symbol='o')
 
     # -----------------------------
     # Serial communication
@@ -132,11 +137,22 @@ class MyWindow(QMainWindow):
     # ----------------------
     
     def run_background(self):
-        self.output_window.append("Run Background button clicked!")
+        self.output_window.append("Run background button clicked!")
         self.start_time = time.time()
-        self.timer.start(self.interval)  
+        self.timer.start(self.interval)
 
+        self.output_window.append(f"Background data collection started for 20000 milliseconds")
 
+        QTimer.singleShot(20000, self.finish_background_collection) 
+
+    def finish_background_collection(self):
+
+        self.output_window.append("Background data collection finished")
+        self.timer.stop()
+        
+        self.background_magnitude_data = self.magnitude_data.copy()
+        self.background_time_data = self.time_data.copy()
+    
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000  # Convert to milliseconds
         self.timer.setInterval(self.interval)
@@ -178,7 +194,7 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def closeEvent(self, event):
-        self.ser.close()
+        #self.ser.close()
         event.accept()
 
 
