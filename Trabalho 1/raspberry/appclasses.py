@@ -169,8 +169,16 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def text_input(self):
-        self.phrase = self.text_widget.text()  
-        self.output_window.append(f"Phrase entered: {self.entered_phrase}")
+        command = self.text_widget.text().strip().upper()
+
+        if command == "CLEAR":
+            self.clear_data()
+        elif command == "MEASURE":
+            self.send_command_clicked()
+        else:
+            self.output_window.append(f"Unknown command: {command}")
+
+        self.text_widget.clear()
 
     def run_background(self):
         self.output_window.append("Run background button clicked!")
@@ -246,6 +254,17 @@ class MyWindow(QMainWindow):
     def send_command_clicked(self):
         self.output_window.append("Send Command button clicked.") 
         self.update_data()
+
+    def clear_data(self):
+        self.output_window.append("Clearing data...")
+        self.timer.stop()
+        self.magnitude_data.clear()
+        self.time_data.clear()
+        self.background_magnitude_data.clear()
+        self.background_time_data.clear()
+        self.background_offset = 0.0
+        self.curve.setData([], [])
+        self.output_window.append("Data cleared.")
 
     # -----------------------------
     # Close properly
