@@ -40,6 +40,8 @@ class MyWindow(QMainWindow):
         # Background storage
         self.background_magnitude_data = []
         self.background_time_data = []
+        self.background_active = False
+        self.background_offset = 0.0
 
         # Start time
         self.start_time = None
@@ -53,6 +55,7 @@ class MyWindow(QMainWindow):
         # Run Background button
         self.background_button = QPushButton("Run Background")
         self.layout.addWidget(self.background_button)
+        self.background_button.setStyleSheet("background-color: #c8e6c9; color: #2e7d32; font-weight: bold;") # Verde
         self.background_button.clicked.connect(self.run_background)
         
         # Time Interval
@@ -126,7 +129,10 @@ class MyWindow(QMainWindow):
         if self.ser.in_waiting > 0:
             message = self.ser.readline().decode().strip()
             try:
-                value = float(message)
+                if self.background_active:
+                    value = float(message)
+                else:
+                    value = float(message) - self.background_offset
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
                 self.output_window.append(f"Message received: {message}")
@@ -153,6 +159,9 @@ class MyWindow(QMainWindow):
     def run_background(self):
         self.output_window.append("Run background button clicked!")
 
+        self.background_active = True
+        self.background_button.setStyleSheet("background-color: #ffeb3b;") # Amarelo (Atenção)
+
         self.magnitude_data.clear()
         self.time_data.clear()
         self.update_data()
@@ -165,17 +174,20 @@ class MyWindow(QMainWindow):
         QTimer.singleShot(20000, self.finish_background_collection) 
 
     def finish_background_collection(self):
-
+        self.background_active = False
+        self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
         self.output_window.append("Background data collection finished")
         self.timer.stop()
         
         self.background_magnitude_data = self.magnitude_data.copy()
         self.background_time_data = self.time_data.copy()
-
+        if self.magnitude_data:
+            self.background_offset = sum(self.magnitude_data) / len(self.magnitude_data)
+            self.output_window.append(f"New Background Offset: {self.background_offset}")
         self.magnitude_data.clear()
         self.time_data.clear()
         self.update_data()
-    
+
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000 
         self.timer.setInterval(self.interval)
