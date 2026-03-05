@@ -5,7 +5,7 @@ import serial
 import pyqtgraph as pg
 import time
 
-from PyQt5.QtWidgets import QApplication, QComboBox, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -47,10 +47,19 @@ class MyWindow(QMainWindow):
         self.start_time = None
 
         self.interval = 2000  
+
+        self.phrase = ""
         
         # -----------------------------
         # Buttons and plot setup
         # -----------------------------
+
+        # Insert phrase button 
+        self.text_widget = QLineEdit()
+        self.text_widget.setPlaceholderText("Type a phrase here...")
+        self.layout.addWidget(self.text_widget)
+
+        self.text_widget.returnPressed.connect(self.text_input)
 
         # Run Background button
         self.background_button = QPushButton("Run Background")
@@ -121,12 +130,15 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        command = "MEASURE\n"
-        self.ser.write(command.encode())
-        #self.output_window.append(f"Command sent: {command.strip()}")
+        if self.phrase != "MESSAGE":
+            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
+            return
+        else:
+            command = self.phrase + "\n"
+            self.ser.write(command.encode())
 
     def read_message(self):
-        if self.ser.in_waiting > 0:
+        if self.ser.in_waiting > 0 :
             message = self.ser.readline().decode().strip()
             try:
                 if self.background_active:
@@ -146,16 +158,20 @@ class MyWindow(QMainWindow):
     def update_data(self):
         self.send_command()
         self.read_message()
-        #if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
-            #self.output_window.append("INFO: No data to plot yet.")
+        if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
+            self.output_window.append("INFO: No data to plot yet.")
         self.curve.setData(self.time_data, self.magnitude_data)
     # Note: if the plot is updating too quickly, reduce the timer interval
 
 
     # -----------------------------
     # Button handlers
-    # ----------------------
-    
+    # -----------------------------
+
+    def text_input(self):
+        self.phrase = self.text_widget.text()  
+        self.output_window.append(f"Phrase entered: {self.entered_phrase}")
+
     def run_background(self):
         self.output_window.append("Run background button clicked!")
 
@@ -205,6 +221,8 @@ class MyWindow(QMainWindow):
         layout.addWidget(label)
 
         self.help_window.show()
+
+    # Basic buttons
 
     def start_clicked(self):
         self.output_window.append("Start button clicked!")
