@@ -24,9 +24,12 @@ void loop() {
       tesla = (voltage - 2.5)/ 0.018;
 
       Serial.println(tesla);
+    }
 
+    else{
+      Serial.println("9999");
+    }
   }
-
+  
   delay(100);
-  }
 }

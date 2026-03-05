@@ -112,7 +112,7 @@ class MyWindow(QMainWindow):
             pen=pg.mkPen(color="#FA7AB7", width=2),   # line
             symbol='o',
             symbolSize=10,
-            symbolBrush=pg.mkBrush(color='#FA7AB7'),                    # dot fill
+            symbolBrush=pg.mkBrush(color="#8A8386"),                    # dot fill
             symbolPen=pg.mkPen(color='#FA7AB7', width=2)     # dot outline
         )
 
@@ -126,7 +126,7 @@ class MyWindow(QMainWindow):
         #self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
-        if self.ser.in_waiting > 0:
+        if len(self.ser.in_waiting):
             message = self.ser.readline().decode().strip()
             try:
                 if self.background_active:
@@ -175,7 +175,7 @@ class MyWindow(QMainWindow):
 
     def finish_background_collection(self):
         self.background_active = False
-        self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
+        self.background_button.setStyleSheet("background-color: #8a8386;") # Cinzento padrão
         self.output_window.append("Background data collection finished")
         self.timer.stop()
         
