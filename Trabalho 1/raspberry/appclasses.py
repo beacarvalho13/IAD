@@ -89,7 +89,7 @@ class MyWindow(QMainWindow):
         # Connect buttons
         self.start_button.clicked.connect(self.start_clicked)
         self.stop_button.clicked.connect(self.stop_clicked)
-        self.send_button.clicked.connect(self.send_command)
+        self.send_button.clicked.connect(self.send_command_clicked)
 
         # Timer 
         self.timer = QTimer()
@@ -118,21 +118,14 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        #if self.ser and self.ser.is_open:
-            #self.output_window.append("Serial port is open.")
-        #if self.ser.out_waiting == 0:
-            #self.output_window.append("Output buffer is empty. Sending command...")
         command = "MEASURE\n"
         self.ser.write(command.encode())
         #self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
-        #if self.ser and self.ser.is_open:
-            #self.output_window.append("Serial port is open.")
         if self.ser.in_waiting > 0:
             message = self.ser.readline().decode().strip()
             try:
-                #self.output_window.append("Data available in input buffer. Reading...")
                 value = float(message)
                 self.magnitude_data.append(value)
                 self.time_data.append(time.time() - self.start_time)
@@ -147,8 +140,8 @@ class MyWindow(QMainWindow):
     def update_data(self):
         self.send_command()
         self.read_message()
-        if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
-            self.output_window.append("INFO: No data to plot yet.")
+        #if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
+            #self.output_window.append("INFO: No data to plot yet.")
         self.curve.setData(self.time_data, self.magnitude_data)
     # Note: if the plot is updating too quickly, reduce the timer interval
 
@@ -216,11 +209,12 @@ class MyWindow(QMainWindow):
     def stop_clicked(self):
         if not self.timer.isActive():
             self.output_window.append("INFO: System is already stopped.")
+            return
         self.output_window.append("Stop button clicked!")
         self.timer.stop()
     
     def send_command_clicked(self):
-        self.output_window.append("Send Command button clicked!") 
+        self.output_window.append("Send Command button clicked.") 
         self.update_data()
 
     # -----------------------------
