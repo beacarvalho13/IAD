@@ -4,8 +4,9 @@ from PyQt5 import QtWidgets
 import serial
 import pyqtgraph as pg
 import time
+import csv
 
-from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QComboBox, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -47,19 +48,10 @@ class MyWindow(QMainWindow):
         self.start_time = None
 
         self.interval = 2000  
-
-        self.phrase = ""
         
         # -----------------------------
         # Buttons and plot setup
         # -----------------------------
-
-        # Insert phrase button 
-        self.text_widget = QLineEdit()
-        self.text_widget.setPlaceholderText("Type a phrase here...")
-        self.layout.addWidget(self.text_widget)
-
-        self.text_widget.returnPressed.connect(self.text_input)
 
         # Run Background button
         self.background_button = QPushButton("Run Background")
@@ -89,19 +81,23 @@ class MyWindow(QMainWindow):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.send_button = QPushButton("Send Command")
+        self.export_button = QPushButton("Export to CSV")
 
         self.layout.addWidget(self.start_button)
         self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.send_button)
-
+        self.layout.addWidget(self.export_button)
+        
         self.start_button.setFixedSize(800, 50)
         self.stop_button.setFixedSize(800, 50)
         self.send_button.setFixedSize(800, 50)
+        self.export_button.setFixedSize(800, 50)
 
         # Connect buttons
         self.start_button.clicked.connect(self.start_clicked)
         self.stop_button.clicked.connect(self.stop_clicked)
         self.send_button.clicked.connect(self.send_command_clicked)
+        self.export_button.clicked.connect(self.export_to_csv)
 
         # Timer 
         self.timer = QTimer()
@@ -121,7 +117,7 @@ class MyWindow(QMainWindow):
             pen=pg.mkPen(color="#FA7AB7", width=2),   # line
             symbol='o',
             symbolSize=10,
-            symbolBrush=pg.mkBrush(color="#8A8386"),                    # dot fill
+            symbolBrush=pg.mkBrush(color='#FA7AB7'),                    # dot fill
             symbolPen=pg.mkPen(color='#FA7AB7', width=2)     # dot outline
         )
 
@@ -130,15 +126,12 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        if self.phrase != "MESSAGE":
-            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
-            return
-        else:
-            command = self.phrase + "\n"
-            self.ser.write(command.encode())
+        command = "MEASURE\n"
+        self.ser.write(command.encode())
+        #self.output_window.append(f"Command sent: {command.strip()}")
 
     def read_message(self):
-        if self.ser.in_waiting > 0 :
+        if self.ser.in_waiting > 0:
             message = self.ser.readline().decode().strip()
             try:
                 if self.background_active:
@@ -158,20 +151,16 @@ class MyWindow(QMainWindow):
     def update_data(self):
         self.send_command()
         self.read_message()
-        if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
-            self.output_window.append("INFO: No data to plot yet.")
+        #if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
+            #self.output_window.append("INFO: No data to plot yet.")
         self.curve.setData(self.time_data, self.magnitude_data)
     # Note: if the plot is updating too quickly, reduce the timer interval
 
 
     # -----------------------------
     # Button handlers
-    # -----------------------------
-
-    def text_input(self):
-        self.phrase = self.text_widget.text()  
-        self.output_window.append(f"Phrase entered: {self.entered_phrase}")
-
+    # ----------------------
+    
     def run_background(self):
         self.output_window.append("Run background button clicked!")
 
@@ -191,7 +180,7 @@ class MyWindow(QMainWindow):
 
     def finish_background_collection(self):
         self.background_active = False
-        self.background_button.setStyleSheet("background-color: #8a8386;") # Cinzento padrão
+        self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
         self.output_window.append("Background data collection finished")
         self.timer.stop()
         
@@ -222,8 +211,6 @@ class MyWindow(QMainWindow):
 
         self.help_window.show()
 
-    # Basic buttons
-
     def start_clicked(self):
         self.output_window.append("Start button clicked!")
         if self.timer.isActive():
@@ -246,6 +233,25 @@ class MyWindow(QMainWindow):
     def send_command_clicked(self):
         self.output_window.append("Send Command button clicked.") 
         self.update_data()
+
+    def export_to_csv(self):
+        if not self.time_data or not self.magnitude_data:
+            self.output_window.append("No data to export.")
+            return
+
+        filename = f"measurement_{int(time.time())}.csv"
+
+        try:
+            with open(filename, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(["Time (s)", "Magnitude (Gs)"])
+                for t, m in zip(self.time_data, self.magnitude_data):
+                    writer.writerow([t, m])
+
+            self.output_window.append(f"Data exported successfully to {filename}")
+
+        except Exception as e:
+            self.output_window.append(f"Error exporting CSV: {e}")
 
     # -----------------------------
     # Close properly
