@@ -4,6 +4,8 @@ from PyQt5 import QtWidgets
 import serial
 import pyqtgraph as pg
 import time
+import csv
+import datetime
 
 from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
@@ -89,19 +91,23 @@ class MyWindow(QMainWindow):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.send_button = QPushButton("Send Command")
+        self.export_button = QPushButton("Export to CSV")
 
         self.layout.addWidget(self.start_button)
         self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.send_button)
+        self.layout.addWidget(self.export_button)
 
         self.start_button.setFixedSize(800, 50)
         self.stop_button.setFixedSize(800, 50)
         self.send_button.setFixedSize(800, 50)
+        self.export_button.setFixedSize(800, 50)
 
         # Connect buttons
         self.start_button.clicked.connect(self.start_clicked)
         self.stop_button.clicked.connect(self.stop_clicked)
         self.send_button.clicked.connect(self.send_command_clicked)
+        self.export_button.clicked.connect(self.export_to_csv)
 
         # Timer 
         self.timer = QTimer()
@@ -265,6 +271,26 @@ class MyWindow(QMainWindow):
         self.background_offset = 0.0
         self.curve.setData([], [])
         self.output_window.append("Data cleared.")
+
+    def export_to_csv(self):
+        if not self.time_data or not self.magnitude_data:
+            self.output_window.append("No data to export.")
+            return
+
+        x.datetime.datetime.now()
+        filename = f"measurement_{str(x.year) + "_" + str(x.month) + "_" + str(x.day) + "_" + str(x.hour) + "_" + str(x.minute) + "_" + str(x.second)}.csv"
+
+        try:
+            with open(filename, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(["Time (s)", "Magnitude (Gs)"])
+                for t, m in zip(self.time_data, self.magnitude_data):
+                    writer.writerow([t, m])
+
+            self.output_window.append(f"Data exported successfully to {filename}")
+
+        except Exception as e:
+            self.output_window.append(f"Error exporting CSV: {e}")
 
     # -----------------------------
     # Close properly
