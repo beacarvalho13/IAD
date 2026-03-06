@@ -48,7 +48,7 @@ class MyWindow(QMainWindow):
         # Start time
         self.start_time = None
 
-        self.interval = 2000  
+        self.interval = 1000  
 
         self.phrase = ""
         
@@ -124,19 +124,16 @@ class MyWindow(QMainWindow):
 
         # Create curve
         self.curve = self.plot_widget.plot(
-            pen=pg.mkPen(color="#FA7AB7", width=2),   # line
+            pen=pg.mkPen(color="black", width=2),   # line
             symbol='o',
-            symbolSize=10,
-            symbolBrush=pg.mkBrush(color='#FA7AB7'),                    # dot fill
-            symbolPen=pg.mkPen(color='#FA7AB7', width=2)     # dot outline
-        )
+            symbolSize=10)
 
     # -----------------------------
     # Serial communication
     # -----------------------------
 
     def send_command(self):
-        if self.phrase != "MESSAGE":
+        if self.phrase != "MEASURE" and self.phrase != "CLEAR":
             self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
             return
         else:
@@ -152,6 +149,8 @@ class MyWindow(QMainWindow):
                 else:
                     value = float(message) - self.background_offset
                 self.magnitude_data.append(value)
+                if self.start_time is None:
+                    self.start_time = time.time()
                 self.time_data.append(time.time() - self.start_time)
                 self.output_window.append(f"Message received: {message}")
             except ValueError:
@@ -166,9 +165,17 @@ class MyWindow(QMainWindow):
         self.read_message()
         if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
             self.output_window.append("INFO: No data to plot yet.")
-        self.curve.setData(self.time_data, self.magnitude_data)
-    # Note: if the plot is updating too quickly, reduce the timer interval
+            brushes = []
 
+        for v in self.magnitude_data:
+            if v > 0:
+                brushes.append(pg.mkBrush('r'))  # positive -> red
+            elif v < 0:
+                brushes.append(pg.mkBrush('b'))  # negative -> blue
+            else:
+                brushes.append(pg.mkBrush('k'))  # zero -> black
+
+        self.curve.setData(self.time_data,self.magnitude_data,symbolBrush=brushes,symbolPen=brushes)
 
     # -----------------------------
     # Button handlers
@@ -180,7 +187,8 @@ class MyWindow(QMainWindow):
         if command == "CLEAR":
             self.clear_data()
         elif command == "MEASURE":
-            self.send_command_clicked()
+            self.phrase = "MEASURE"
+            self.output_window.append("MEASURE command set. Click 'Send Command' to execute.")
         else:
             self.output_window.append(f"Unknown command: {command}")
 
@@ -258,7 +266,7 @@ class MyWindow(QMainWindow):
         self.timer.stop()
     
     def send_command_clicked(self):
-        self.output_window.append("Send Command button clicked.") 
+        self.output_window.append("Send Command button clicked.")
         self.update_data()
 
     def clear_data(self):
@@ -277,8 +285,8 @@ class MyWindow(QMainWindow):
             self.output_window.append("No data to export.")
             return
 
-        x.datetime.datetime.now()
-        filename = f"measurement_{str(x.year) + "_" + str(x.month) + "_" + str(x.day) + "_" + str(x.hour) + "_" + str(x.minute) + "_" + str(x.second)}.csv"
+        self.x = datetime.datetime.now()
+        filename = f"measurement_{self.x.year}_{self.x.month}_{self.x.day}_{self.x.hour}_{self.x.minute}_{self.x.second}.csv"
 
         try:
             with open(filename, "w", newline="", encoding="utf-8") as file:
