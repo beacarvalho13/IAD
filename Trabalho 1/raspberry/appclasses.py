@@ -173,14 +173,20 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def update_data(self):
+
+        if not self.timer.isActive():
+            return
+
         self.send_command()
         self.read_message()
+
         if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
-            self.output_window.append("INFO: No data to plot yet.")
-        
+            #self.output_window.append("INFO: No data to plot yet.")
+            return
 
         self.line.setData(self.time_data, self.magnitude_data)
 
+        #Scatter plot with color coding
         spots = []
         for t, v in zip(self.time_data, self.magnitude_data):
 
@@ -220,7 +226,6 @@ class MyWindow(QMainWindow):
 
         self.magnitude_data.clear()
         self.time_data.clear()
-        self.update_data()
 
         self.start_time = time.time()
         self.timer.start(self.interval)
@@ -233,16 +238,21 @@ class MyWindow(QMainWindow):
         self.background_active = False
         self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
         self.output_window.append("Background data collection finished")
+        
         self.timer.stop()
         
         self.background_magnitude_data = self.magnitude_data.copy()
         self.background_time_data = self.time_data.copy()
+
         if self.magnitude_data:
             self.background_offset = sum(self.magnitude_data) / len(self.magnitude_data)
             self.output_window.append(f"New Background Offset: {self.background_offset}")
+        
         self.magnitude_data.clear()
         self.time_data.clear()
-        self.update_data()
+
+        self.line.setData([], [])
+        self.scatter.setData([])
 
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000 
@@ -295,7 +305,8 @@ class MyWindow(QMainWindow):
         self.background_magnitude_data.clear()
         self.background_time_data.clear()
         self.background_offset = 0.0
-        self.curve.setData([], [])
+        self.scatter.clear()
+        self.line.clear()
         self.output_window.append("Data cleared.")
 
     def export_to_csv(self):
