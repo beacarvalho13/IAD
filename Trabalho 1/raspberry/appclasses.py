@@ -239,6 +239,7 @@ class MyWindow(QMainWindow):
 
     def finish_background_collection(self):
         self.background_active = False
+
         self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
         self.output_window.append("Background data collection finished")
         
@@ -283,6 +284,7 @@ class MyWindow(QMainWindow):
             self.output_window.append("INFO: System is already running.")
         self.start_time = time.time()
         self.timer.start(self.interval) 
+        self.background_active = True
 
         # Clear previous data
         self.magnitude_data.clear()
@@ -293,11 +295,13 @@ class MyWindow(QMainWindow):
         if not self.timer.isActive():
             self.output_window.append("INFO: System is already stopped.")
             return
+        self.background_active = False
         self.output_window.append("Stop button clicked!")
         self.timer.stop()
     
     def send_command_clicked(self):
         self.output_window.append("Send Command button clicked.")
+        self.background_active = True
         self.update_data()
 
     def clear_data(self):
