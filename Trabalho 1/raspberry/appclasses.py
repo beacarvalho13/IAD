@@ -295,7 +295,7 @@ class MyWindow(QMainWindow):
         self.background_magnitude_data.clear()
         self.background_time_data.clear()
         self.background_offset = 0.0
-        self.curve.setData([], [])
+        self.scatter.setData([], [])
         self.output_window.append("Data cleared.")
 
     def export_to_csv(self):
