@@ -123,10 +123,9 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         # Create curve
-        self.curve = self.plot_widget.plot(
-            pen=pg.mkPen(color="black", width=2),   # line
-            symbol='o',
-            symbolSize=10)
+        self.line = self.plot_widget.plot(pen=pg.mkPen(color="#FA7AB7", width=2))
+        self.scatter = pg.ScatterPlotItem(size=10,symbol='o')
+        self.plot_widget.addItem(self.scatter)
 
     # -----------------------------
     # Serial communication
@@ -142,7 +141,7 @@ class MyWindow(QMainWindow):
 
     def read_message(self):
         start_wait = time.time()
-        timeout = 0.3   # wait up to 0.3 seconds
+        timeout = 0.3  
 
         while self.ser.in_waiting == 0:
             if time.time() - start_wait > timeout:
@@ -150,24 +149,24 @@ class MyWindow(QMainWindow):
                 return
             QtWidgets.QApplication.processEvents()
             
-            message = self.ser.readline().decode().strip()
+        message = self.ser.readline().decode().strip()
 
-            try:
-                if self.background_active:
-                    value = float(message)
-                else:
-                    value = float(message) - self.background_offset
-                self.magnitude_data.append(value)
+        try:
+            if self.background_active:
+                value = float(message)
+            else:
+                value = float(message) - self.background_offset
+            self.magnitude_data.append(value)
                 
-                if self.start_time is None:
-                    self.start_time = time.time()
+            if self.start_time is None:
+                self.start_time = time.time()
                 
-                self.time_data.append(time.time() - self.start_time)
+            self.time_data.append(time.time() - self.start_time)
                 
-                self.output_window.append(f"Message received: {message}")
+            self.output_window.append(f"Message received: {message}")
             
-            except ValueError:
-                self.output_window.append(f"Invalid data: {message}")
+        except ValueError:
+            self.output_window.append(f"Invalid data: {message}")
 
     # -----------------------------
     # Plot update
@@ -178,18 +177,24 @@ class MyWindow(QMainWindow):
         self.read_message()
         if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
             self.output_window.append("INFO: No data to plot yet.")
-            brushes = []
+        
 
-        for v in self.magnitude_data:
+        self.line.setData(self.time_data, self.magnitude_data)
+
+        spots = []
+        for t, v in zip(self.time_data, self.magnitude_data):
+
             if v > 0:
-                brushes.append(pg.mkBrush('r'))  # positive -> red
+                color = 'r'
             elif v < 0:
-                brushes.append(pg.mkBrush('b'))  # negative -> blue
+                color = 'b'
             else:
-                brushes.append(pg.mkBrush('k'))  # zero -> black
+                color = 'k'
 
-        self.curve.setData(self.time_data,self.magnitude_data,symbolBrush=brushes,symbolPen=brushes)
+            spots.append({'pos': (t, v),'brush': pg.mkBrush(color)})
 
+        self.scatter.setData(spots)
+        
     # -----------------------------
     # Button handlers
     # -----------------------------
