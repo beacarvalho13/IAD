@@ -141,18 +141,31 @@ class MyWindow(QMainWindow):
             self.ser.write(command.encode())
 
     def read_message(self):
-        if self.ser.in_waiting > 0 :
+        start_wait = time.time()
+        timeout = 0.3   # wait up to 0.3 seconds
+
+        while self.ser.in_waiting == 0:
+            if time.time() - start_wait > timeout:
+                self.output_window.append("No response from Arduino.")
+                return
+            QtWidgets.QApplication.processEvents()
+            
             message = self.ser.readline().decode().strip()
+
             try:
                 if self.background_active:
                     value = float(message)
                 else:
                     value = float(message) - self.background_offset
                 self.magnitude_data.append(value)
+                
                 if self.start_time is None:
                     self.start_time = time.time()
+                
                 self.time_data.append(time.time() - self.start_time)
+                
                 self.output_window.append(f"Message received: {message}")
+            
             except ValueError:
                 self.output_window.append(f"Invalid data: {message}")
 
