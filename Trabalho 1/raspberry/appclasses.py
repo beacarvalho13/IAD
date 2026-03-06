@@ -132,7 +132,7 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        if self.phrase != "MEASURE" and self.phrase != "CLEAR":
+        if self.phrase != "MEASURE":
             self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
             return
         else:
@@ -174,7 +174,7 @@ class MyWindow(QMainWindow):
 
     def update_data(self):
 
-        if not self.timer.isActive():
+        if not self.background_active:
             return
 
         self.send_command()
@@ -308,8 +308,9 @@ class MyWindow(QMainWindow):
         self.background_magnitude_data.clear()
         self.background_time_data.clear()
         self.background_offset = 0.0
-        self.scatter.clear()
-        self.line.clear()
+        self.line.setData([], [])
+        self.scatter.setData([])
+
         self.output_window.append("Data cleared.")
 
     def export_to_csv(self):
