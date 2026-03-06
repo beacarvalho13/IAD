@@ -213,6 +213,9 @@ class MyWindow(QMainWindow):
         elif command == "MEASURE":
             self.phrase = "MEASURE"
             self.output_window.append("MEASURE command set. Click 'Send Command' to execute.")
+        elif command == "TERMINAL":
+            self.output_window.clear()
+            self.output_window.append("Terminal cleared.")
         else:
             self.output_window.append(f"Unknown command: {command}")
 
