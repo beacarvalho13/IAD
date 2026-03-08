@@ -278,7 +278,33 @@ class MyWindow(QMainWindow):
         layout.addWidget(label)
 
         self.help_window.show()
+    
+    def open_stats(self):
+        self.stats_window = QWidget()
+        self.stats_window.setWindowTitle("Statistics")
+        self.stats_window.setGeometry(500, 500, 300, 200)
 
+        layout = QVBoxLayout()
+        self.stats_window.setLayout(layout)
+        mean = sum(self.magnitude_data) / len(self.magnitude_data) if self.magnitude_data else 0
+        stddev = (sum((x - mean) ** 2 for x in self.magnitude_data) / len(self.magnitude_data)) ** 0.5 if self.magnitude_data else 0
+        max_value = max(self.magnitude_data) if self.magnitude_data else 0
+        min_value = min(self.magnitude_data) if self.magnitude_data else 0
+
+        label = QLabel(f"Mean: {mean:.2f}")
+        layout.addWidget(label)
+
+        label = QLabel(f"Standard Deviation: {stddev:.2f}")
+        layout.addWidget(label)
+
+        label = QLabel(f"Max Value: {max_value:.2f}")
+        layout.addWidget(label)
+
+        label = QLabel(f"Min Value: {min_value:.2f}")
+        layout.addWidget(label)
+
+        self.stats_window.show()
+        
     # Basic buttons
 
     def start_clicked(self):
