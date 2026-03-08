@@ -1,3 +1,4 @@
+from cProfile import label
 import sys
 from turtle import delay
 from PyQt5 import QtWidgets
@@ -7,7 +8,7 @@ import time
 import csv
 import datetime
 
-from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QScrollArea, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -28,12 +29,15 @@ class MyWindow(QMainWindow):
         self.output_window = QtWidgets.QTextBrowser(self.central_widget)
         self.layout.addWidget(self.output_window)
 
+        """
         # Serial
         self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port")
         else:
             self.output_window.append("Unable to connect to port")
+        
+        """
 
         # Data storage
         self.magnitude_data = []
@@ -219,6 +223,15 @@ class MyWindow(QMainWindow):
         elif command == "TERMINAL":
             self.output_window.clear()
             self.output_window.append("Terminal cleared.")
+        elif command == "STATS":    
+            if self.timer.isActive():
+                self.output_window.append("Please stop the measurement before viewing statistics.")
+                return
+            if self.magnitude_data is None or len(self.magnitude_data) == 0:
+                self.output_window.append("No data available to calculate statistics.")
+                return
+            self.open_stats()
+
         else:
             self.output_window.append(f"Unknown command: {command}")
 
@@ -269,14 +282,116 @@ class MyWindow(QMainWindow):
     def open_help_window(self):
         self.help_window = QWidget()
         self.help_window.setWindowTitle("Help")
-        self.help_window.setGeometry(500, 500, 300, 200)
+        self.help_window.setGeometry(500, 500, 500, 500)
 
-        layout = QVBoxLayout()
-        self.help_window.setLayout(layout)
+        layout = QVBoxLayout(self.help_window)
 
-        label = QLabel("This is the help window. Add instructions here.")
-        layout.addWidget(label)
+        # Scroll Area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        layout.addWidget(scroll)
 
+        # Container widget inside scroll
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+
+        help_text = """
+        Magnetic Measurement App - Help Guide
+
+        This application allows you to collect, visualize, and export magnetic field
+        measurements received from an Arduino device.
+
+        --------------------------------------------------
+        GENERAL WORKFLOW
+        --------------------------------------------------
+        1. Connect the Arduino device.
+        2. Enter the command MEASURE in the text box.
+        3. Click "Send Command" or press "Start".
+        4. The data will be displayed in real-time on the graph.
+        5. Stop the measurement when finished.
+        6. Export the collected data to a CSV file if needed.
+
+        --------------------------------------------------
+        TEXT COMMANDS
+        --------------------------------------------------
+        MEASURE
+            Enables measurement mode. The system will send the
+            MEASURE command to the Arduino to request data.
+
+        CLEAR
+            Clears all stored data and resets the graph.
+
+        TERMINAL
+            Clears the terminal output window.
+
+        STATS
+            Opens a statistics window.
+
+        --------------------------------------------------
+        BUTTON FUNCTIONS
+        --------------------------------------------------
+        Run Background
+            Collects background measurements for 20 seconds.
+            The average value is used as a background offset
+            that will be subtracted from future measurements.
+
+        Start
+            Begins real-time data collection and plotting.
+
+        Stop
+            Stops data acquisition.
+
+        Send Command
+            Sends the MEASURE command once and reads a value.
+
+        Export to CSV
+            Saves the collected data (time and magnitude)
+            to a CSV file with a timestamped filename.
+
+        Help Window
+            Opens this help guide.
+
+        --------------------------------------------------
+        GRAPH INFORMATION
+        --------------------------------------------------
+        The graph shows magnetic magnitude vs time.
+
+        Red points  : Positive magnetic values
+        Blue points : Negative magnetic values
+        Black points: Zero value
+
+        The line represents the measurement trend.
+
+        --------------------------------------------------
+        TIME INTERVAL
+        --------------------------------------------------
+        Use the dropdown menu to change how often
+        measurements are taken (1–20 seconds). 
+        The standard value is 1 second.
+
+        --------------------------------------------------
+        STATISTICS
+        --------------------------------------------------
+        The program can calculate:
+        • Mean value
+        • Standard deviation
+        • Maximum value
+        • Minimum value
+
+        --------------------------------------------------
+        NOTES
+        --------------------------------------------------
+        • Make sure the Arduino serial port is connected.
+        • Data is stored only during active measurements.
+        • Export your data before clearing it if needed.
+
+        """
+
+        label = QLabel(help_text)
+        label.setWordWrap(True)
+
+        scroll_layout.addWidget(label)
+        scroll.setWidget(scroll_content)
         self.help_window.show()
     
     def open_stats(self):
