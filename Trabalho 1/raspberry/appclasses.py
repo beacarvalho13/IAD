@@ -29,7 +29,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.output_window)
 
         # Serial
-        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port")
         else:
@@ -143,6 +143,9 @@ class MyWindow(QMainWindow):
         start_wait = time.time()
         timeout = 0.3  
 
+        if self.phrase != "MEASURE":
+            return
+        
         while self.ser.in_waiting == 0:
             if time.time() - start_wait > timeout:
                 self.output_window.append("No response from Arduino.")
