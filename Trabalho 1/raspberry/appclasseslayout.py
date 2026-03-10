@@ -272,9 +272,9 @@ class MyWindow(QMainWindow):
         self.scatter.setData(spots)
 
         # Auto scale graph
-        #self.plot_widget.enableAutoRange(axis='y')
+        self.plot_widget.enableAutoRange(axis='y')
 
-    def mouse_moved(self, event):
+    '''def mouse_moved(self, event):
         pos = event[0]  # get mouse position
         if self.plot_widget.sceneBoundingRect().contains(pos):
             mousePoint = self.plot_widget.getPlotItem().vb.mapSceneToView(pos)
@@ -283,7 +283,7 @@ class MyWindow(QMainWindow):
             self.vLine.setPos(x)
             self.hLine.setPos(y)
             self.label.setText(f"Time: {x:.2f} s\nMagnitude: {y:.2f} Gs")
-            self.label.setPos(x, y)
+            self.label.setPos(x, y)'''
             
     # -----------------------------
     # Button handlers
