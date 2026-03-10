@@ -188,7 +188,7 @@ class MyWindow(QMainWindow):
         self.label = pg.TextItem("", anchor=(0,1))
         self.plot_widget.addItem(self.label)
 
-        self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
+        #self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
 
         # Serial
         self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
