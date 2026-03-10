@@ -167,6 +167,8 @@ class MyWindow(QMainWindow):
         # -----------------------------
         self.plot_widget = pg.PlotWidget(title="Real-time Data")
         self.plot_widget.showGrid(x=True, y=True)
+        self.plot_widget.setXRange(0, 20)
+        self.plot_widget.setYRange(-100, 100)
         self.plot_widget.setLabel('left', 'Magnitude', units='Gs')
         self.plot_widget.setLabel('bottom', 'Time', units='s')
         self.plot_widget.setBackground('w')
