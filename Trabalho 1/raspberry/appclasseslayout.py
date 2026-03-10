@@ -193,7 +193,7 @@ class MyWindow(QMainWindow):
         # Serial
         self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         if self.ser and self.ser.is_open:
-            self.output_window.append("Successful connection to port")
+            self.output_window.append("Successful connection to port.")
         else:
             self.output_window.append("Unable to connect to port")
 
