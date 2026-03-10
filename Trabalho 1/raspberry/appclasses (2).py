@@ -28,7 +28,7 @@ class MyWindow(QMainWindow):
         self.layout.addWidget(self.output_window)
 
         # Serial
-        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port")
         else:

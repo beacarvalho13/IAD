@@ -4,8 +4,7 @@ from PyQt5 import QtWidgets
 import serial
 import pyqtgraph as pg
 import time
-import csv
-import datetime
+import random # Adicionado para simular dados
 
 from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
@@ -15,7 +14,7 @@ class MyWindow(QMainWindow):
         super().__init__()  
 
         # Window setup
-        self.setWindowTitle("Magnetic Measurement App")
+        self.setWindowTitle("Magnetic Measurement App (Simulation Mode)")
         self.setGeometry(100, 100, 800, 600)
 
         # Central widget & layout
@@ -28,12 +27,14 @@ class MyWindow(QMainWindow):
         self.output_window = QtWidgets.QTextBrowser(self.central_widget)
         self.layout.addWidget(self.output_window)
 
-        # Serial
-        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-        if self.ser and self.ser.is_open:
-            self.output_window.append("Successful connection to port")
-        else:
-            self.output_window.append("Unable to connect to port")
+        # --- SERIAL (COMENTADO PARA TESTE) ---
+        # self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        # if self.ser and self.ser.is_open:
+        #     self.output_window.append("Successful connection to port")
+        # else:
+        #     self.output_window.append("Unable to connect to port")
+        self.ser = None # Simulação
+        self.output_window.append("SIMULATION MODE: Serial connection bypassed.")
 
         # Data storage
         self.magnitude_data = []
@@ -60,7 +61,6 @@ class MyWindow(QMainWindow):
         self.text_widget = QLineEdit()
         self.text_widget.setPlaceholderText("Type a phrase here...")
         self.layout.addWidget(self.text_widget)
-
         self.text_widget.returnPressed.connect(self.text_input)
 
         # Run Background button
@@ -91,23 +91,19 @@ class MyWindow(QMainWindow):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.send_button = QPushButton("Send Command")
-        self.export_button = QPushButton("Export to CSV")
 
         self.layout.addWidget(self.start_button)
         self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.send_button)
-        self.layout.addWidget(self.export_button)
 
         self.start_button.setFixedSize(800, 50)
         self.stop_button.setFixedSize(800, 50)
         self.send_button.setFixedSize(800, 50)
-        self.export_button.setFixedSize(800, 50)
 
         # Connect buttons
         self.start_button.clicked.connect(self.start_clicked)
         self.stop_button.clicked.connect(self.stop_clicked)
         self.send_button.clicked.connect(self.send_command_clicked)
-        self.export_button.clicked.connect(self.export_to_csv)
 
         # Timer 
         self.timer = QTimer()
@@ -137,25 +133,31 @@ class MyWindow(QMainWindow):
 
     def send_command(self):
         if self.phrase != "MESSAGE":
-            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
+            self.output_window.append("INFO: No phrase entered. Please enter 'MESSAGE' before sending.")
             return
         else:
             command = self.phrase + "\n"
-            self.ser.write(command.encode())
+            # self.ser.write(command.encode()) # COMENTADO PARA TESTE
+            self.output_window.append(f"Simulation: Command '{self.phrase}' sent.")
 
     def read_message(self):
-        if self.ser.in_waiting > 0 :
-            message = self.ser.readline().decode().strip()
-            if message == "9999":
-                self.output_window.append("WARNING: Wrong command")
+        # SIMULAÇÃO DE RECEÇÃO DE DADOS
+        # if self.ser.in_waiting > 0 :
+        if True: # Simula que há sempre dados
+            # message = self.ser.readline().decode().strip() # COMENTADO PARA TESTE
+            message = str(random.uniform(2.4, 2.6)) # Simula valor vindo do sensor
             try:
                 if self.background_active:
                     value = float(message)
                 else:
                     value = float(message) - self.background_offset
+                
+                # Proteção para o tempo inicial se não houver start_time
+                t = time.time() - self.start_time if self.start_time else 0
+                
                 self.magnitude_data.append(value)
-                self.time_data.append(time.time() - self.start_time)
-                self.output_window.append(f"Message received: {message}")
+                self.time_data.append(t)
+                self.output_window.append(f"Simulated message received: {message}")
             except ValueError:
                 self.output_window.append(f"Invalid data: {message}")
 
@@ -169,7 +171,6 @@ class MyWindow(QMainWindow):
         if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
             self.output_window.append("INFO: No data to plot yet.")
         self.curve.setData(self.time_data, self.magnitude_data)
-    # Note: if the plot is updating too quickly, reduce the timer interval
 
 
     # -----------------------------
@@ -177,16 +178,8 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def text_input(self):
-        command = self.text_widget.text().strip().upper()
-
-        if command == "CLEAR":
-            self.clear_data()
-        elif command == "MEASURE":
-            self.send_command_clicked()
-        else:
-            self.output_window.append(f"Unknown command: {command}")
-
-        self.text_widget.clear()
+        self.phrase = self.text_widget.text()  
+        self.output_window.append(f"Phrase entered: {self.phrase}") # Corrigido: self.phrase
 
     def run_background(self):
         self.output_window.append("Run background button clicked!")
@@ -196,9 +189,9 @@ class MyWindow(QMainWindow):
 
         self.magnitude_data.clear()
         self.time_data.clear()
+        
+        self.start_time = time.time() # Definir tempo aqui para evitar erro no primeiro update
         self.update_data()
-
-        self.start_time = time.time()
         self.timer.start(self.interval)
 
         self.output_window.append(f"Background data collection started for 20000 milliseconds")
@@ -215,10 +208,10 @@ class MyWindow(QMainWindow):
         self.background_time_data = self.time_data.copy()
         if self.magnitude_data:
             self.background_offset = sum(self.magnitude_data) / len(self.magnitude_data)
-            self.output_window.append(f"New Background Offset: {self.background_offset}")
+            self.output_window.append(f"New Background Offset: {self.background_offset:.4f}")
         self.magnitude_data.clear()
         self.time_data.clear()
-        self.update_data()
+        # self.update_data() # Removido aqui para evitar novo ponto após fecho
 
     def text_changed(self, text):
         self.interval = int(text.strip().split()[0]) * 1000 
@@ -238,19 +231,17 @@ class MyWindow(QMainWindow):
 
         self.help_window.show()
 
-    # Basic buttons
-
     def start_clicked(self):
         self.output_window.append("Start button clicked!")
         if self.timer.isActive():
             self.output_window.append("INFO: System is already running.")
+            return # Evita duplicar timers
+            
         self.start_time = time.time()
-        self.timer.start(self.interval) 
-
-        # Clear previous data
         self.magnitude_data.clear()
         self.time_data.clear()
         self.update_data()
+        self.timer.start(self.interval) 
 
     def stop_clicked(self):
         if not self.timer.isActive():
@@ -260,48 +251,19 @@ class MyWindow(QMainWindow):
         self.timer.stop()
     
     def send_command_clicked(self):
-        self.output_window.append("Send Command button clicked.") 
-        self.update_data()
-
-    def clear_data(self):
-        self.output_window.append("Clearing data...")
-        self.timer.stop()
+        self.output_window.append("Send Command button clicked.")
         self.magnitude_data.clear()
         self.time_data.clear()
-        self.background_magnitude_data.clear()
-        self.background_time_data.clear()
-        self.background_offset = 0.0
-        self.curve.setData([], [])
-        self.output_window.append("Data cleared.")
-
-    def export_to_csv(self):
-        if not self.time_data or not self.magnitude_data:
-            self.output_window.append("No data to export.")
-            return
-
-        self.x = datetime.datetime.now()
-        filename = f"measurement_{str(x.year) + "_" + str(x.month) + "_" + str(x.day) + "_" + str(x.hour) + "_" + str(x.minute) + "_" + str(x.second)}.csv"
-
-        try:
-            with open(filename, "w", newline="", encoding="utf-8") as file:
-                writer = csv.writer(file)
-                writer.writerow(["Time (s)", "Magnitude (Gs)"])
-                for t, m in zip(self.time_data, self.magnitude_data):
-                    writer.writerow([t, m])
-
-            self.output_window.append(f"Data exported successfully to {filename}")
-
-        except Exception as e:
-            self.output_window.append(f"Error exporting CSV: {e}")
+        self.update_data()
 
     # -----------------------------
     # Close properly
     # -----------------------------
 
     def closeEvent(self, event):
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            self.output_window.append("Serial port closed safely.")
+        # if self.ser and self.ser.is_open: # COMENTADO PARA TESTE
+        #     self.ser.close()
+        #     self.output_window.append("Serial port closed safely.")
         event.accept()
 
 
