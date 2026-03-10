@@ -233,7 +233,6 @@ class MyWindow(QMainWindow):
             self.time_data.append(time.time() - self.start_time)
             if value > 9000:
                 self.output_window.append(f"Unknown Command: {self.phrase}")
-                return
             self.output_window.append(f"Message received: {message}")
             
         except ValueError:
@@ -310,8 +309,9 @@ class MyWindow(QMainWindow):
                 return
             self.open_stats()
 
-        '''else:
-            self.output_window.append(f"Unknown command: {command}")'''
+        else:
+            self.phrase = command
+            self.output_window.append(f"{command} may not work as a command.")
 
         self.text_widget.clear()
 
