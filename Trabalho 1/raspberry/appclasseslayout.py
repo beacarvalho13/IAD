@@ -1,14 +1,15 @@
-from cProfile import label
 import sys
 from turtle import delay
 from PyQt5 import QtWidgets
+from PyQt5 import QtCore
+from PyQt5 import QtCore
 import serial
 import pyqtgraph as pg
 import time
 import csv
 import datetime
 
-from PyQt5.QtWidgets import QApplication, QComboBox, QLineEdit, QMainWindow, QScrollArea, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QComboBox, QGroupBox, QHBoxLayout, QLineEdit, QMainWindow, QScrollArea, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
 class MyWindow(QMainWindow):
@@ -17,17 +18,8 @@ class MyWindow(QMainWindow):
 
         # Window setup
         self.setWindowTitle("Magnetic Measurement App")
-        self.setGeometry(100, 100, 800, 600)
-
-        # Central widget & layout
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout()
-        self.central_widget.setLayout(self.layout)
-
-        # Output window
-        self.output_window = QtWidgets.QTextBrowser(self.central_widget)
-        self.layout.addWidget(self.output_window)
+        self.setGeometry(100, 100, 800, 800)
+        self.setStyleSheet("QGroupBox { font-weight: bold; }")
 
         """
         # Serial
@@ -42,6 +34,7 @@ class MyWindow(QMainWindow):
         # Data storage
         self.magnitude_data = []
         self.time_data = []
+        self.phrase = ""
 
         # Background storage
         self.background_magnitude_data = []
@@ -49,87 +42,162 @@ class MyWindow(QMainWindow):
         self.background_active = False
         self.background_offset = 0.0
 
-        # Start time
+        # Timer setup
         self.start_time = None
-
-        self.interval = 1000  
-
-        self.phrase = ""
-        
-        # -----------------------------
-        # Buttons and plot setup
-        # -----------------------------
-
-        # Insert phrase button 
-        self.text_widget = QLineEdit()
-        self.text_widget.setPlaceholderText("Type a phrase here...")
-        self.layout.addWidget(self.text_widget)
-
-        self.text_widget.returnPressed.connect(self.text_input)
-
-        # Run Background button
-        self.background_button = QPushButton("Run Background")
-        self.layout.addWidget(self.background_button)
-        self.background_button.setStyleSheet("background-color: #c8e6c9; color: #2e7d32; font-weight: bold;") # Verde
-        self.background_button.clicked.connect(self.run_background)
-        
-        # Time Interval
-        self.interval_definer = QComboBox()
-        self.interval_definer.addItem(" 1 second")
-        self.interval_definer.addItem(" 2 seconds")
-        self.interval_definer.addItem(" 5 seconds")
-        self.interval_definer.addItem(" 10 seconds")
-        self.interval_definer.addItem(" 20 seconds")
-
-        self.interval_definer.setFixedHeight(50)
-        self.layout.addWidget(self.interval_definer)
-        self.interval_definer.currentTextChanged.connect(self.text_changed )
-
-        # Help button
-        self.help_button = QPushButton("Help Window")
-        self.layout.addWidget(self.help_button)
-        self.help_button.clicked.connect(self.open_help_window)
-        self.help_button.setFixedSize(800, 50)
-
-        # Standard buttons
-        self.start_button = QPushButton("Start")
-        self.stop_button = QPushButton("Stop")
-        self.send_button = QPushButton("Send Command")
-        self.export_button = QPushButton("Export to CSV")
-
-        self.layout.addWidget(self.start_button)
-        self.layout.addWidget(self.stop_button)
-        self.layout.addWidget(self.send_button)
-        self.layout.addWidget(self.export_button)
-
-        self.start_button.setFixedSize(800, 50)
-        self.stop_button.setFixedSize(800, 50)
-        self.send_button.setFixedSize(800, 50)
-        self.export_button.setFixedSize(800, 50)
-
-        # Connect buttons
-        self.start_button.clicked.connect(self.start_clicked)
-        self.stop_button.clicked.connect(self.stop_clicked)
-        self.send_button.clicked.connect(self.send_command_clicked)
-        self.export_button.clicked.connect(self.export_to_csv)
-
-        # Timer 
+        self.interval = 1000   
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_data)
+        
+        # Central widget
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
 
-        # Plot widget 
+        # MAIN LAYOUT (vertical)
+        self.main_layout = QVBoxLayout()
+        self.central_widget.setLayout(self.main_layout)
+
+        self.main_layout.setContentsMargins(15,15,15,15)
+        self.main_layout.setSpacing(12)
+
+        # -----------------------------
+        # TERMINAL (TOP)
+        # -----------------------------
+        self.output_window = QtWidgets.QTextBrowser()
+        self.main_layout.addWidget(self.output_window)
+        self.output_window.setMinimumHeight(200)
+        
+        # -----------------------------
+        # TWO COLUMN SECTION
+        # -----------------------------
+        self.columns_layout = QHBoxLayout()
+        self.main_layout.addLayout(self.columns_layout)
+        self.columns_layout.setSpacing(30)
+
+        # Create group boxes
+        self.control_group = QGroupBox("Measurement Controls")
+        self.system_group = QGroupBox("System Settings")
+
+        # Create layouts for each group
+        self.left_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout()
+
+        self.left_layout.setContentsMargins(10,15,10,10)
+        self.right_layout.setContentsMargins(10,15,10,10)
+
+        # Assign layouts to the group boxes
+        self.control_group.setLayout(self.left_layout)
+        self.system_group.setLayout(self.right_layout)
+
+        # Add the group boxes to the column layout
+        self.columns_layout.addWidget(self.control_group)
+        self.columns_layout.addWidget(self.system_group)
+
+        # Columns equal width
+        self.columns_layout.setStretch(0, 1)
+        self.columns_layout.setStretch(1, 1)
+
+        # Spacing inside columns
+        self.left_layout.setSpacing(10)
+        self.right_layout.setSpacing(10)
+
+        # -----------------------------
+        # LEFT COLUMN WIDGETS
+        # -----------------------------
+
+        # Command input
+        self.text_widget = QLineEdit()
+        self.text_widget.setPlaceholderText(" Type a command...")
+        self.left_layout.addWidget(self.text_widget)
+        self.text_widget.returnPressed.connect(self.text_input)
+        self.text_widget.setMinimumHeight(50)
+
+        # Start
+        self.start_button = QPushButton("Start")
+        self.left_layout.addWidget(self.start_button)
+        self.start_button.clicked.connect(self.start_clicked)
+        self.start_button.setMinimumHeight(50)
+
+        # Stop
+        self.stop_button = QPushButton("Stop")
+        self.left_layout.addWidget(self.stop_button)
+        self.stop_button.clicked.connect(self.stop_clicked)
+        self.stop_button.setMinimumHeight(50)
+
+
+        # Send command
+        self.send_button = QPushButton("Send Command")
+        self.left_layout.addWidget(self.send_button)
+        self.send_button.clicked.connect(self.send_command_clicked)
+        self.send_button.setMinimumHeight(50)
+
+
+        # -----------------------------
+        # RIGHT COLUMN WIDGETS
+        # -----------------------------
+
+        # Time interval
+        self.interval_definer = QComboBox()
+        self.interval_definer.addItems([
+            "1 second",
+            "2 seconds",
+            "5 seconds",
+            "10 seconds",
+            "20 seconds"
+        ])
+        self.right_layout.addWidget(self.interval_definer)
+        self.interval_definer.currentTextChanged.connect(self.text_changed )
+        self.interval_definer.setMinimumHeight(50)
+
+
+        # Run background
+        self.background_button = QPushButton("Run Background")
+        self.background_button.setStyleSheet("background-color:#c8e6c9;color:#2e7d32;font-weight:bold;")
+        self.right_layout.addWidget(self.background_button)
+        self.background_button.clicked.connect(self.run_background)
+        self.background_button.setMinimumHeight(50)
+
+
+        # Help
+        self.help_button = QPushButton("Help Window")
+        self.right_layout.addWidget(self.help_button)
+        self.help_button.clicked.connect(self.open_help_window)
+        self.help_button.setMinimumHeight(50)
+
+
+        # Export CSV
+        self.export_button = QPushButton("Export to CSV")
+        self.right_layout.addWidget(self.export_button)
+        self.export_button.clicked.connect(self.export_to_csv)
+        self.export_button.setMinimumHeight(50)
+
+
+        # -----------------------------
+        # GRAPH (BOTTOM)
+        # -----------------------------
         self.plot_widget = pg.PlotWidget(title="Real-time Data")
         self.plot_widget.showGrid(x=True, y=True)
         self.plot_widget.setLabel('left', 'Magnitude', units='Gs')
         self.plot_widget.setLabel('bottom', 'Time', units='s')
         self.plot_widget.setBackground('w')
 
-        self.layout.addWidget(self.plot_widget)
+        self.main_layout.addWidget(self.plot_widget)    
 
         # Create curve
         self.line = self.plot_widget.plot(pen=pg.mkPen(color="#FA7AB7", width=2))
         self.scatter = pg.ScatterPlotItem(size=10,symbol='o')
         self.plot_widget.addItem(self.scatter)
+
+        # Crosshair lines
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
+        self.plot_widget.addItem(self.vLine, ignoreBounds=True)
+        self.plot_widget.addItem(self.hLine, ignoreBounds=True)
+
+        # Text label to display coordinates
+        self.label = pg.TextItem("", anchor=(0,1))
+        self.plot_widget.addItem(self.label)
+
+        self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
 
     # -----------------------------
     # Serial communication
@@ -207,7 +275,21 @@ class MyWindow(QMainWindow):
             spots.append({'pos': (t, v),'brush': pg.mkBrush(color)})
 
         self.scatter.setData(spots)
-        
+
+        # Auto scale graph
+        self.plot_widget.enableAutoRange(axis='y')
+
+    def mouse_moved(self, event):
+        pos = event[0]  # get mouse position
+        if self.plot_widget.sceneBoundingRect().contains(pos):
+            mousePoint = self.plot_widget.getPlotItem().vb.mapSceneToView(pos)
+            x = mousePoint.x()
+            y = mousePoint.y()
+            self.vLine.setPos(x)
+            self.hLine.setPos(y)
+            self.label.setText(f"Time: {x:.2f} s\nMagnitude: {y:.2f} Gs")
+            self.label.setPos(x, y)
+            
     # -----------------------------
     # Button handlers
     # -----------------------------
