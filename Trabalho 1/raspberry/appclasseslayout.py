@@ -501,7 +501,7 @@ class MyWindow(QMainWindow):
     # Basic buttons
 
     def start_clicked(self):
-        if self.phrase != "MEASURE":
+        if self.phrase == "":
             self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
             return
         self.output_window.append("Start button clicked!")
@@ -525,7 +525,7 @@ class MyWindow(QMainWindow):
         self.timer.stop()
     
     def send_command_clicked(self):
-        if self.phrase != "MEASURE":
+        if self.phrase == "":
             self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
             return
         self.output_window.append("Send Command button clicked.")
