@@ -237,6 +237,7 @@ class MyWindow(QMainWindow):
                 self.output_window.append(f"Unknown Command: {self.phrase}")
                 if self.timer.isActive():
                     self.timer.stop()
+                    self.output_window.append("Measurement stopped.")
             self.output_window.append(f"Message received: {message}")
             
         except ValueError:
