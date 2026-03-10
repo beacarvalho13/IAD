@@ -19,17 +19,8 @@ class MyWindow(QMainWindow):
         # Window setup
         self.setWindowTitle("Magnetic Measurement App")
         self.setGeometry(100, 100, 800, 800)
-        self.setStyleSheet("QGroupBox { font-weight: bold; }")
-
-        """
-        # Serial
-        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
-        if self.ser and self.ser.is_open:
-            self.output_window.append("Successful connection to port")
-        else:
-            self.output_window.append("Unable to connect to port")
-        
-        """
+        self.setStyleSheet("QGroupBox { font-weight: bold; }")        
+    
 
         # Data storage
         self.magnitude_data = []
@@ -198,6 +189,13 @@ class MyWindow(QMainWindow):
         self.plot_widget.addItem(self.label)
 
         self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
+
+        # Serial
+        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
+        if self.ser and self.ser.is_open:
+            self.output_window.append("Successful connection to port")
+        else:
+            self.output_window.append("Unable to connect to port")
 
     # -----------------------------
     # Serial communication
