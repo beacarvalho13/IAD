@@ -191,7 +191,7 @@ class MyWindow(QMainWindow):
         self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
 
         # Serial
-        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port")
         else:
@@ -202,12 +202,12 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        if self.phrase != "MEASURE":
+        '''if self.phrase != "MEASURE":
             self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
             return
-        else:
-            command = self.phrase + "\n"
-            self.ser.write(command.encode())
+        else:'''
+        command = self.phrase + "\n"
+        self.ser.write(command.encode())
 
     def read_message(self):
         start_wait = time.time()
@@ -503,6 +503,9 @@ class MyWindow(QMainWindow):
     # Basic buttons
 
     def start_clicked(self):
+        if self.phrase != "MEASURE":
+            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
+            return
         self.output_window.append("Start button clicked!")
         if self.timer.isActive():
             self.output_window.append("INFO: System is already running.")
@@ -524,6 +527,9 @@ class MyWindow(QMainWindow):
         self.timer.stop()
     
     def send_command_clicked(self):
+        if self.phrase != "MEASURE":
+            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
+            return
         self.output_window.append("Send Command button clicked.")
         self.background_active = True
         self.update_data()
