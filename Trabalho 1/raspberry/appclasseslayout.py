@@ -272,7 +272,7 @@ class MyWindow(QMainWindow):
         self.scatter.setData(spots)
 
         # Auto scale graph
-        self.plot_widget.enableAutoRange(axis='y')
+        #self.plot_widget.enableAutoRange(axis='y')
 
     '''def mouse_moved(self, event):
         pos = event[0]  # get mouse position
