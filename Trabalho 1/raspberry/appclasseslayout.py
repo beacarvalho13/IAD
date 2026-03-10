@@ -238,7 +238,7 @@ class MyWindow(QMainWindow):
                 if self.timer.isActive():
                     self.timer.stop()
                     self.output_window.append("Measurement stopped.")
-                    return
+                return
             self.output_window.append(f"Message received: {message}")
             
         except ValueError:
