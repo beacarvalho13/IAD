@@ -235,7 +235,8 @@ class MyWindow(QMainWindow):
             self.time_data.append(time.time() - self.start_time)
             if value > 9000:
                 self.output_window.append(f"Unknown Command: {self.phrase}")
-                return
+                if self.timer.isActive():
+                    self.timer.stop()
             self.output_window.append(f"Message received: {message}")
             
         except ValueError:
