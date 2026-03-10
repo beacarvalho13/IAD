@@ -202,10 +202,6 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
     def send_command(self):
-        '''if self.phrase != "MEASURE":
-            self.output_window.append("INFO: No phrase entered. Please enter a phrase before sending.")
-            return
-        else:'''
         command = self.phrase + "\n"
         self.ser.write(command.encode())
 
@@ -213,8 +209,8 @@ class MyWindow(QMainWindow):
         start_wait = time.time()
         timeout = 0.3  
 
-        if self.phrase != "MEASURE":
-            return
+        '''if self.phrase != "MEASURE":
+            return'''
         
         while self.ser.in_waiting == 0:
             if time.time() - start_wait > timeout:
@@ -235,7 +231,9 @@ class MyWindow(QMainWindow):
                 self.start_time = time.time()
                 
             self.time_data.append(time.time() - self.start_time)
-                
+            if value > 9000:
+                self.output_window.append(f"Unknown Command: {self.phrase}")
+                return
             self.output_window.append(f"Message received: {message}")
             
         except ValueError:
