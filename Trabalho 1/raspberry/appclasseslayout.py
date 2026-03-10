@@ -547,6 +547,8 @@ class MyWindow(QMainWindow):
         self.background_magnitude_data.clear()
         self.background_time_data.clear()
         self.background_offset = 0.0
+        self.plot_widget.setXRange(0, 20)
+        self.plot_widget.setYRange(-100, 100)
         self.line.setData([], [])
         self.scatter.setData([])
 
