@@ -310,8 +310,8 @@ class MyWindow(QMainWindow):
                 return
             self.open_stats()
 
-        else:
-            self.output_window.append(f"Unknown command: {command}")
+        '''else:
+            self.output_window.append(f"Unknown command: {command}")'''
 
         self.text_widget.clear()
 
