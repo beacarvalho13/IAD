@@ -1,14 +1,12 @@
 import sys
-from turtle import delay
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
-from PyQt5 import QtCore
 import serial
 import pyqtgraph as pg
 import time
 import csv
 import datetime
 
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QComboBox, QGroupBox, QHBoxLayout, QLineEdit, QMainWindow, QScrollArea, QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtCore import QTimer
 
@@ -43,7 +41,7 @@ class MyWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        # MAIN LAYOUT (vertical)
+        # Main Layout 
         self.main_layout = QVBoxLayout()
         self.central_widget.setLayout(self.main_layout)
 
@@ -51,22 +49,22 @@ class MyWindow(QMainWindow):
         self.main_layout.setSpacing(12)
 
         # -----------------------------
-        # TERMINAL (TOP)
+        # Terminal Output
         # -----------------------------
         self.output_window = QtWidgets.QTextBrowser()
         self.main_layout.addWidget(self.output_window)
         self.output_window.setMinimumHeight(200)
         
         # -----------------------------
-        # TWO COLUMN SECTION
+        # Two columns layout
         # -----------------------------
         self.columns_layout = QHBoxLayout()
-        self.main_layout.addLayout(self.columns_layout)
+
+        self.columns_layout.setStretch(0, 1)
+        self.columns_layout.setStretch(1, 1)
         self.columns_layout.setSpacing(30)
 
-        # Create group boxes
-        self.control_group = QGroupBox("Measurement Controls")
-        self.system_group = QGroupBox("System Settings")
+        self.main_layout.addLayout(self.columns_layout)
 
         # Create layouts for each group
         self.left_layout = QVBoxLayout()
@@ -74,25 +72,21 @@ class MyWindow(QMainWindow):
 
         self.left_layout.setContentsMargins(10,15,10,10)
         self.right_layout.setContentsMargins(10,15,10,10)
-
-        # Assign layouts to the group boxes
-        self.control_group.setLayout(self.left_layout)
-        self.system_group.setLayout(self.right_layout)
-
-        # Add the group boxes to the column layout
-        self.columns_layout.addWidget(self.control_group)
-        self.columns_layout.addWidget(self.system_group)
-
-        # Columns equal width
-        self.columns_layout.setStretch(0, 1)
-        self.columns_layout.setStretch(1, 1)
-
-        # Spacing inside columns
         self.left_layout.setSpacing(10)
         self.right_layout.setSpacing(10)
 
+        # Create group boxes
+        self.control_group = QGroupBox("Measurement Controls")
+        self.system_group = QGroupBox("System Settings")
+
+        self.control_group.setLayout(self.left_layout)
+        self.system_group.setLayout(self.right_layout)
+
+        self.columns_layout.addWidget(self.control_group)
+        self.columns_layout.addWidget(self.system_group)
+
         # -----------------------------
-        # LEFT COLUMN WIDGETS
+        # Left column widgets
         # -----------------------------
 
         # Command input
@@ -123,7 +117,7 @@ class MyWindow(QMainWindow):
 
 
         # -----------------------------
-        # RIGHT COLUMN WIDGETS
+        # Right column widgets
         # -----------------------------
 
         # Time interval
@@ -163,7 +157,7 @@ class MyWindow(QMainWindow):
 
 
         # -----------------------------
-        # GRAPH (BOTTOM)
+        # Graph setup
         # -----------------------------
         self.plot_widget = pg.PlotWidget(title="Real-time Data")
         self.plot_widget.showGrid(x=True, y=True)
@@ -180,7 +174,6 @@ class MyWindow(QMainWindow):
         self.scatter = pg.ScatterPlotItem(size=10,symbol='o')
         self.plot_widget.addItem(self.scatter)
 
-        # Crosshair lines
         self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
         self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
         self.plot_widget.addItem(self.vLine, ignoreBounds=True)
@@ -190,18 +183,16 @@ class MyWindow(QMainWindow):
         self.label = pg.TextItem("", anchor=(0,1))
         self.plot_widget.addItem(self.label)
 
-        #self.proxy = pg.SignalProxy(self.plot_widget.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
+    # -----------------------------
+    # Serial communication
+    # -----------------------------
 
-        # Serial
+        # Initialize serial connection with Arduino
         self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port.")
         else:
             self.output_window.append("Unable to connect to port")
-
-    # -----------------------------
-    # Serial communication
-    # -----------------------------
 
     def send_command(self):
         command = self.phrase + "\n"
@@ -209,11 +200,9 @@ class MyWindow(QMainWindow):
 
     def read_message(self):
         start_wait = time.time()
-        timeout = 0.3  
-
-        '''if self.phrase != "MEASURE":
-            return'''
+        timeout = 0.3 
         
+        # Wait for a response with timeout
         while self.ser.in_waiting == 0:
             if time.time() - start_wait > timeout:
                 self.output_window.append("No response from Arduino.")
@@ -233,6 +222,8 @@ class MyWindow(QMainWindow):
                 self.start_time = time.time()
                 
             self.time_data.append(time.time() - self.start_time)
+
+            # Command error handling
             if value > 9000:
                 self.output_window.append(f"Unknown Command: {self.phrase}")
                 if self.timer.isActive():
@@ -257,12 +248,11 @@ class MyWindow(QMainWindow):
         self.read_message()
 
         if len(self.time_data) == 0 or len(self.magnitude_data) == 0:
-            #self.output_window.append("INFO: No data to plot yet.")
             return
 
         self.line.setData(self.time_data, self.magnitude_data)
 
-        #Scatter plot with color coding
+        # Color coding the plot
         spots = []
         for t, v in zip(self.time_data, self.magnitude_data):
 
@@ -277,20 +267,9 @@ class MyWindow(QMainWindow):
 
         self.scatter.setData(spots)
 
-        # Auto scale graph
+        # Auto scale graph so that all points are visible
         self.plot_widget.enableAutoRange(axis='y')
         self.plot_widget.enableAutoRange(axis='x')
-
-    '''def mouse_moved(self, event):
-        pos = event[0]  # get mouse position
-        if self.plot_widget.sceneBoundingRect().contains(pos):
-            mousePoint = self.plot_widget.getPlotItem().vb.mapSceneToView(pos)
-            x = mousePoint.x()
-            y = mousePoint.y()
-            self.vLine.setPos(x)
-            self.hLine.setPos(y)
-            self.label.setText(f"Time: {x:.2f} s\nMagnitude: {y:.2f} Gs")
-            self.label.setPos(x, y)'''
             
     # -----------------------------
     # Button handlers
@@ -326,8 +305,7 @@ class MyWindow(QMainWindow):
         self.output_window.append("Run background button clicked!")
 
         self.background_active = True
-        self.background_button.setStyleSheet("background-color: #ffeb3b;") # Amarelo (Atenção)
-
+        self.background_button.setStyleSheet("background-color: #ffeb3b;")
         self.magnitude_data.clear()
         self.time_data.clear()
 
@@ -341,7 +319,7 @@ class MyWindow(QMainWindow):
     def finish_background_collection(self):
         self.background_active = False
 
-        self.background_button.setStyleSheet("background-color: #f0f0f0;") # Cinzento padrão
+        self.background_button.setStyleSheet("background-color: #f0f0f0;") 
         self.output_window.append("Background data collection finished")
         
         self.timer.stop()
@@ -486,6 +464,8 @@ class MyWindow(QMainWindow):
 
         layout = QVBoxLayout()
         self.stats_window.setLayout(layout)
+
+        # Calculate statistics
         mean = sum(self.magnitude_data) / len(self.magnitude_data) if self.magnitude_data else 0
         stddev = (sum((x - mean) ** 2 for x in self.magnitude_data) / len(self.magnitude_data)) ** 0.5 if self.magnitude_data else 0
         max_value = max(self.magnitude_data) if self.magnitude_data else 0
@@ -505,7 +485,9 @@ class MyWindow(QMainWindow):
 
         self.stats_window.show()
         
-    # Basic buttons
+   # -----------------------------
+    # Basic button handlers
+    # -----------------------------
 
     def start_clicked(self):
         if self.phrase == "":
@@ -575,7 +557,7 @@ class MyWindow(QMainWindow):
             self.output_window.append(f"Error exporting CSV: {e}")
 
     # -----------------------------
-    # Close properly
+    # Close
     # -----------------------------
 
     def closeEvent(self, event):
