@@ -58,8 +58,6 @@ class MyWindow(QMainWindow):
         # Two columns layout
         # -----------------------------
         self.columns_layout = QHBoxLayout()
-        self.columns_layout.setStretch(0, 1)
-        self.columns_layout.setStretch(1, 1)
         self.columns_layout.setSpacing(30)
         self.main_layout.addLayout(self.columns_layout)
 
@@ -78,6 +76,9 @@ class MyWindow(QMainWindow):
         self.system_group.setLayout(self.right_layout)
         self.columns_layout.addWidget(self.control_group)
         self.columns_layout.addWidget(self.system_group)
+
+        self.columns_layout.setStretch(0, 1)
+        self.columns_layout.setStretch(1, 1)
 
         # -----------------------------
         # Left column widgets
@@ -179,12 +180,14 @@ class MyWindow(QMainWindow):
     # Serial communication
     # -----------------------------
 
+        """
         # Initialize serial connection with Arduino
         self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)   # Insert correct port
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port.")
         else:
             self.output_window.append("Unable to connect to port")
+        """
 
     def send_command(self):
         command = self.phrase + "\n"
@@ -540,11 +543,13 @@ class MyWindow(QMainWindow):
     # Close
     # -----------------------------
 
+    """
     def closeEvent(self, event):
         if self.ser and self.ser.is_open:
             self.ser.close()
             self.output_window.append("Serial port closed safely.")
         event.accept()
+    """
 
 
 if __name__ == "__main__":
