@@ -44,7 +44,6 @@ class MyWindow(QMainWindow):
         # Main Layout 
         self.main_layout = QVBoxLayout()
         self.central_widget.setLayout(self.main_layout)
-
         self.main_layout.setContentsMargins(15,15,15,15)
         self.main_layout.setSpacing(12)
 
@@ -59,17 +58,14 @@ class MyWindow(QMainWindow):
         # Two columns layout
         # -----------------------------
         self.columns_layout = QHBoxLayout()
-
         self.columns_layout.setStretch(0, 1)
         self.columns_layout.setStretch(1, 1)
         self.columns_layout.setSpacing(30)
-
         self.main_layout.addLayout(self.columns_layout)
 
         # Create layouts for each group
         self.left_layout = QVBoxLayout()
         self.right_layout = QVBoxLayout()
-
         self.left_layout.setContentsMargins(10,15,10,10)
         self.right_layout.setContentsMargins(10,15,10,10)
         self.left_layout.setSpacing(10)
@@ -78,10 +74,8 @@ class MyWindow(QMainWindow):
         # Create group boxes
         self.control_group = QGroupBox("Measurement Controls")
         self.system_group = QGroupBox("System Settings")
-
         self.control_group.setLayout(self.left_layout)
         self.system_group.setLayout(self.right_layout)
-
         self.columns_layout.addWidget(self.control_group)
         self.columns_layout.addWidget(self.system_group)
 
@@ -166,14 +160,12 @@ class MyWindow(QMainWindow):
         self.plot_widget.setLabel('left', 'Magnitude', units='Gs')
         self.plot_widget.setLabel('bottom', 'Time', units='s')
         self.plot_widget.setBackground('w')
-
         self.main_layout.addWidget(self.plot_widget)    
 
         # Create curve
         self.line = self.plot_widget.plot(pen=pg.mkPen(color="#FA7AB7", width=2))
         self.scatter = pg.ScatterPlotItem(size=10,symbol='o')
         self.plot_widget.addItem(self.scatter)
-
         self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
         self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='k', style=QtCore.Qt.DotLine))
         self.plot_widget.addItem(self.vLine, ignoreBounds=True)
@@ -188,7 +180,7 @@ class MyWindow(QMainWindow):
     # -----------------------------
 
         # Initialize serial connection with Arduino
-        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)   # Insert correct port
         if self.ser and self.ser.is_open:
             self.output_window.append("Successful connection to port.")
         else:
@@ -303,27 +295,20 @@ class MyWindow(QMainWindow):
 
     def run_background(self):
         self.output_window.append("Run background button clicked!")
-
         self.background_active = True
         self.background_button.setStyleSheet("background-color: #ffeb3b;")
         self.magnitude_data.clear()
         self.time_data.clear()
-
         self.start_time = time.time()
         self.timer.start(self.interval)
-
         self.output_window.append(f"Background data collection started for 20000 milliseconds")
-
         QTimer.singleShot(20000, self.finish_background_collection) 
 
     def finish_background_collection(self):
         self.background_active = False
-
         self.background_button.setStyleSheet("background-color: #f0f0f0;") 
         self.output_window.append("Background data collection finished")
-        
         self.timer.stop()
-        
         self.background_magnitude_data = self.magnitude_data.copy()
         self.background_time_data = self.time_data.copy()
 
@@ -333,7 +318,6 @@ class MyWindow(QMainWindow):
         
         self.magnitude_data.clear()
         self.time_data.clear()
-
         self.line.setData([], [])
         self.scatter.setData([])
 
@@ -346,7 +330,6 @@ class MyWindow(QMainWindow):
         self.help_window = QWidget()
         self.help_window.setWindowTitle("Help")
         self.help_window.setGeometry(500, 500, 500, 500)
-
         layout = QVBoxLayout(self.help_window)
 
         # Scroll Area
@@ -452,7 +435,6 @@ class MyWindow(QMainWindow):
 
         label = QLabel(help_text)
         label.setWordWrap(True)
-
         scroll_layout.addWidget(label)
         scroll.setWidget(scroll_content)
         self.help_window.show()
@@ -461,7 +443,6 @@ class MyWindow(QMainWindow):
         self.stats_window = QWidget()
         self.stats_window.setWindowTitle("Statistics")
         self.stats_window.setGeometry(500, 500, 300, 200)
-
         layout = QVBoxLayout()
         self.stats_window.setLayout(layout)
 
@@ -533,7 +514,6 @@ class MyWindow(QMainWindow):
         self.plot_widget.setYRange(-100, 100)
         self.line.setData([], [])
         self.scatter.setData([])
-
         self.output_window.append("Data cleared.")
 
     def export_to_csv(self):
