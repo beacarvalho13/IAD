@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../widgets/device_card.dart';
 import 'device_screen.dart';
+import '../data/fake_device_data_source.dart';
+import '../data/ble_device_data_source.dart';
+import '../data/device_data_source.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,27 +17,25 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Device> devices = [];
   bool isScanning = false;
 
-  void startScan() async {
+  // Choose which source to use
+  final DeviceDataSource dataSource = FakeDeviceDataSource();
+  // final DeviceDataSource dataSource = BleDeviceDataSource();
+
+  void startScan() {
     setState(() => isScanning = true);
 
-    // simulate scanning delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      isScanning = false;
-      devices = [
-        Device(name: "Sensor A", id: "00:11", rssi: -40),
-        Device(name: "Sensor B", id: "22:33", rssi: -60),
-      ];
+    dataSource.getDevices().listen((foundDevices) {
+      setState(() {
+        devices = foundDevices;
+        isScanning = false;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Bluetooth Devices"),
-      ),
+      appBar: AppBar(title: const Text("Bluetooth Devices")),
       body: Column(
         children: [
           if (isScanning) const LinearProgressIndicator(),
@@ -43,14 +44,16 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: devices.length,
               itemBuilder: (context, index) {
                 final device = devices[index];
-
                 return DeviceCard(
                   device: device,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => DeviceScreen(device: device),
+                        builder: (_) => DeviceScreen(
+                          device: device,
+                          dataSource: dataSource,
+                        ),
                       ),
                     );
                   },
