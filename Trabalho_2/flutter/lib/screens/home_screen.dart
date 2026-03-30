@@ -3,7 +3,6 @@ import '../models/device.dart';
 import '../widgets/device_card.dart';
 import 'device_screen.dart';
 import '../data/fake_device_data_source.dart';
-import '../data/ble_device_data_source.dart';
 import '../data/device_data_source.dart';
 
 class HomeScreen extends StatefulWidget {
