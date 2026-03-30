@@ -4,11 +4,15 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class BleDeviceDataSource implements DeviceDataSource {
   @override
-  Stream<List<Device>> getDevices() {
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+  Stream<List<Device>> getDevices() async* {
+    // Start scanning if not already scanning
+    if (!(await FlutterBluePlus.isScanning.first)) {
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+    }
 
-    return FlutterBluePlus.scanResults.map((List<ScanResult> results) {
-      return results.map((ScanResult r) {
+    // Emit results as they arrive
+    await for (final results in FlutterBluePlus.scanResults) {
+      List<Device> bleDevices = results.map((r) {
         return Device(
           id: r.device.remoteId.str,
           name: r.device.platformName.isEmpty ? "Unknown Device" : r.device.platformName,
@@ -16,14 +20,15 @@ class BleDeviceDataSource implements DeviceDataSource {
           nativeDevice: r.device,
         );
       }).toList();
-    });
+
+      yield bleDevices;
+    }
   }
 
   @override
   Stream<int> getSensorValue(Device device, String sensor) async* {
-    
     if (device.nativeDevice == null) {
-      yield 0; // or fake value if you want
+      yield 0; // fallback for fake devices
       return;
     }
 
@@ -32,31 +37,25 @@ class BleDeviceDataSource implements DeviceDataSource {
     try {
       await d.connect(autoConnect: false);
     } catch (e) {
-      // already connected or failed → ignore
-      print("Connect error: $e");
+      // already connected or failed
+      print("BLE connect error: $e");
     }
 
-    
-        List<BluetoothService> services;
+    List<BluetoothService> services = [];
     try {
       services = await d.discoverServices();
     } catch (e) {
-      print("Discover error: $e");
+      print("BLE discover error: $e");
       return;
     }
 
     for (var service in services) {
-      print("Service: ${service.uuid}");
-
-      // ⚠️ This comparison is probably wrong (see note below)
-      if (service.uuid.toString().toLowerCase() == sensor.toLowerCase()) {
-
-        for (var characteristic in service.characteristics) {
+      for (var characteristic in service.characteristics) {
+        try {
           await characteristic.setNotifyValue(true);
-
-          yield* characteristic.lastValueStream.map((value) {
-            return value.isNotEmpty ? value[0] : 0;
-          });
+          yield* characteristic.lastValueStream.map((value) => value.isNotEmpty ? value[0] : 0);
+        } catch (e) {
+          print("Characteristic error: $e");
         }
       }
     }
