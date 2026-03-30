@@ -21,13 +21,15 @@ class _HomeScreenState extends State<HomeScreen> {
   // Choose your data source (Fake or BLE)
   final DeviceDataSource fakedataSource = FakeDeviceDataSource();
   final DeviceDataSource bleDataSource = BleDeviceDataSource();
-
+  StreamSubscription<bool>? _scanStatusSub;
+  
   StreamSubscription<List<Device>>? _bleSub;
   StreamSubscription<List<Device>>? _fakeSub;
 
   // Keep separate lists to merge
   List<Device> _bleDevices = [];
   List<Device> _fakeDevices = [];
+
 
   void startScan() {
     setState(() => isScanning = true);
@@ -90,10 +92,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Bluetooth Devices")),
+      appBar: AppBar(
+        title: const Text("Bluetooth Devices"),
+        backgroundColor: Colors.blueAccent,
+      ),
       body: Column(
         children: [
-          if (isScanning) const LinearProgressIndicator(),
+          const SizedBox(height: 10),
+          if (isScanning)
+            const LinearProgressIndicator()
+          else
+            const Text("Tap the search icon to scan for devices"),
           Expanded(
             child: ListView.builder(
               itemCount: devices.length,
@@ -101,7 +110,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 final device = devices[index];
                 return DeviceCard(
                   device: device,
-                  onTap: () => openDevice(device),
+                  onTap: () async {
+                    try {
+                      // Try connecting immediately like your friend did
+                      if (device.nativeDevice != null) {
+                        await device.nativeDevice!.connect(autoConnect: false);
+                        print("Connected to ${device.nativeDevice!.remoteId}");
+                      }
+                    } catch (e) {
+                      print("Error connecting: $e");
+                    }
+
+                    openDevice(device);
+                  },
                 );
               },
             ),
@@ -110,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: isScanning ? null : startScan,
-        child: const Icon(Icons.search),
+        child: Icon(isScanning ? Icons.sync : Icons.search),
       ),
     );
   }
