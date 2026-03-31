@@ -5,10 +5,12 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 class BleDeviceDataSource implements DeviceDataSource {
   @override
   Stream<List<Device>> getDevices() {
+    // 1. Inicia o scan
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
 
-    return FlutterBluePlus.scanResults.map((List<ScanResult> results) {
-      return results.map((ScanResult r) {
+    // 2. Usa yield* (ou return do stream convertido)
+    return FlutterBluePlus.scanResults.map((results) {
+      return results.map((r) {
         return Device(
           id: r.device.remoteId.str,
           name: r.device.platformName.isEmpty ? "Unknown Device" : r.device.platformName,
@@ -21,42 +23,24 @@ class BleDeviceDataSource implements DeviceDataSource {
 
   @override
   Stream<int> getSensorValue(Device device, String sensor) async* {
-    
-    if (device.nativeDevice == null) {
-      yield 0; // or fake value if you want
-      return;
-    }
+    if (device.nativeDevice == null) return;
 
     final d = device.nativeDevice!;
-
-    try {
-      await d.connect(autoConnect: false);
-    } catch (e) {
-      // already connected or failed → ignore
-      print("Connect error: $e");
-    }
-
     
-        List<BluetoothService> services;
-    try {
-      services = await d.discoverServices();
-    } catch (e) {
-      print("Discover error: $e");
-      return;
-    }
+    // Garante conexão
+    await d.connect(autoConnect: false).catchError((e) => print(e));
+    
+    List<BluetoothService> services = await d.discoverServices();
 
     for (var service in services) {
-      print("Service: ${service.uuid}");
-
-      // ⚠️ This comparison is probably wrong (see note below)
-      if (service.uuid.toString().toLowerCase() == sensor.toLowerCase()) {
-
-        for (var characteristic in service.characteristics) {
+      for (var characteristic in service.characteristics) {
+        if (characteristic.uuid.toString().toLowerCase() == sensor.toLowerCase()) {
           await characteristic.setNotifyValue(true);
-
-          yield* characteristic.lastValueStream.map((value) {
+          
+          yield* characteristic.onValueReceived.map((value) {
             return value.isNotEmpty ? value[0] : 0;
           });
+          return; // Sai da função após encontrar a característica certa
         }
       }
     }

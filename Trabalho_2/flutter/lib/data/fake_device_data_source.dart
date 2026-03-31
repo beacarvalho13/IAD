@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 import '../models/device.dart';
 import 'device_data_source.dart';
-import 'dart:math';
 
 class FakeDeviceDataSource implements DeviceDataSource {
   @override
   Stream<List<Device>> getDevices() async* {
+    // Only emit devices after getDevices() is called
     await Future.delayed(const Duration(seconds: 2));
     yield [
       Device(name: "Fake Sensor A", id: "FAKE_01", rssi: -40, nativeDevice: null),
@@ -18,8 +19,8 @@ class FakeDeviceDataSource implements DeviceDataSource {
     final random = Random();
     while (true) {
       await Future.delayed(const Duration(seconds: 1));
-      if (sensor.contains("pressure")) { 
-        yield 30 + random.nextInt(5); // Simulação Pressão
+      if (sensor.contains("force")) {
+        yield 30 + random.nextInt(5);
       } else {
         yield 20 + random.nextInt(3);
       }
