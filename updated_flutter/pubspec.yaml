@@ -1,0 +1,36 @@
+name: meu_projeto
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_blue_plus: 1.31.0
+
+dev_dependencies:
+  flutter_native_splash: ^2.4.7
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/logo/bg.png
+
+# ==================== FLUTTER NATIVE SPLASH CONFIG ====================
+flutter_native_splash:
+  color: "#42a5f5"   # this is the background color
+  image: assets/images/logo/bg.png
+  android: true
+  ios: true
+  fullscreen: true
+
+  android_12:
+    image: assets/images/logo/bg.png
+    icon_background_color: "#42a5f5"
