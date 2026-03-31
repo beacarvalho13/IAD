@@ -69,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       all[d.id] = d;
     }
     
+
     setState(() {
       devices = all.values.toList();
       if (_bleDevices.isNotEmpty || _fakeDevices.isNotEmpty) {
