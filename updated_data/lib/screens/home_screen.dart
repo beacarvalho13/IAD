@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../widgets/device_card.dart';
 import 'device_screen.dart';
+import 'writer_screen.dart'; // Importa o novo ecrã
+import 'reader_screen.dart'; // Importa o novo ecrã
 import '../data/fake_device_data_source.dart';
 import '../data/ble_device_data_source.dart';
 import '../data/device_data_source.dart';
@@ -17,95 +19,106 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Device> devices = [];
   bool isScanning = false;
+  Device? connectedDevice; // Guarda o dispositivo selecionado
 
-  // Choose your data source (Fake or BLE)
   final DeviceDataSource fakedataSource = FakeDeviceDataSource();
   final DeviceDataSource bleDataSource = BleDeviceDataSource();
 
   StreamSubscription<List<Device>>? _bleSub;
   StreamSubscription<List<Device>>? _fakeSub;
 
-  // Keep separate lists to merge
   List<Device> _bleDevices = [];
   List<Device> _fakeDevices = [];
 
-  // -------------------- SCAN LOGIC --------------------
+  // -------------------- LÓGICA DE SCAN --------------------
   void startScan() {
-  setState(() {
-    isScanning = true;
-    _bleDevices = [];
-    _fakeDevices = [];
-    devices = [];
-  });
+    setState(() {
+      isScanning = true;
+      _bleDevices = [];
+      _fakeDevices = [];
+      devices = [];
+    });
 
-  _bleSub?.cancel();
-  _fakeSub?.cancel();
+    _bleSub?.cancel();
+    _fakeSub?.cancel();
 
-  _bleSub = bleDataSource.getDevices().listen((found) {
-    _bleDevices = found;
-    _updateDevices();
-  });
+    _bleSub = bleDataSource.getDevices().listen((found) {
+      _bleDevices = found;
+      _updateDevices();
+    });
 
-  _fakeSub = fakedataSource.getDevices().listen((found) {
-    _fakeDevices = found;
-    _updateDevices();
-  });
+    _fakeSub = fakedataSource.getDevices().listen((found) {
+      _fakeDevices = found;
+      _updateDevices();
+    });
 
-  Future.delayed(const Duration(seconds: 5), () {
-    if (mounted) setState(() => isScanning = false);
-  });
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) setState(() => isScanning = false);
+    });
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) {
-      // O segredo está aqui:
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setSheetState) {
-          
-          // Criamos um Timer para forçar o Sheet a redesenhar 
-          // sempre que a lista global 'devices' mudar
-          Timer.periodic(const Duration(milliseconds: 500), (timer) {
-            if (context.mounted) {
-              setSheetState(() {}); // Atualiza o interior do BottomSheet
-            } else {
-              timer.cancel();
-            }
-          });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            // Timer para forçar o refresh do BottomSheet enquanto a lista 'devices' cresce
+            Timer.periodic(const Duration(milliseconds: 500), (timer) {
+              if (context.mounted) {
+                setSheetState(() {});
+              } else {
+                timer.cancel();
+              }
+            });
 
-          return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: _buildScanResults(),
-          );
-        },
-      );
-    },
-  );
-}
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: _buildScanResults(),
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _updateDevices() {
     final Map<String, Device> all = {};
-
-    // Merge fake first, then BLE (or vice versa)
-    for (var d in _fakeDevices) {
-      all[d.id] = d;
+    for (var d in _fakeDevices) { all[d.id] = d; }
+    for (var d in _bleDevices) { all[d.id] = d; }
+    if (mounted) {
+      setState(() {
+        devices = all.values.toList();
+      });
     }
-    for (var d in _bleDevices) {
-      all[d.id] = d;
-    }
-
-    setState(() {
-      devices = all.values.toList();
-    });
   }
 
-  void openDevice(Device device) {
-    final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+  // -------------------- NAVEGAÇÃO --------------------
+  void selectDevice(Device device) {
+    setState(() {
+      connectedDevice = device;
+    });
+    Navigator.pop(context); // Fecha o BottomSheet
+  }
 
+  void openWriter(Device device) {
+    final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DeviceScreen(device: device, dataSource: dataSource),
+        builder: (_) => WriterScreen(device: device, dataSource: dataSource),
+      ),
+    );
+  }
+
+  void openReader(Device device) {
+    final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReaderScreen(device: device, dataSource: dataSource),
       ),
     );
   }
@@ -117,27 +130,26 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // -------------------- SCAN RESULT WIDGET --------------------
+  // -------------------- UI COMPONENTS --------------------
   Widget _buildScanResults() {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          const Text("Searching for Devices", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           if (isScanning) const LinearProgressIndicator(),
           const SizedBox(height: 10),
           Expanded(
             child: devices.isEmpty
-                ? const Center(child: Text("No devices found"))
+                ? const Center(child: Text("No devices found yet..."))
                 : ListView.builder(
                     itemCount: devices.length,
                     itemBuilder: (context, index) {
                       final device = devices[index];
                       return DeviceCard(
                         device: device,
-                        onTap: () {
-                          openDevice(device);
-                        },
+                        onTap: () => selectDevice(device),
                       );
                     },
                   ),
@@ -147,62 +159,94 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // -------------------- MAIN SCREEN --------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-
       appBar: AppBar(
-        title: const Text("Talky Buddy"),
+        title: const Text("Talky Buddy", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER
-            const Text(
-              "Welcome!",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 30),
+            const Text("Welcome!", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
 
-            // CONTENT CARD
+            // CARD DE STATUS
             Container(
-              height: 150,
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    connectedDevice == null ? Icons.bluetooth_disabled : Icons.bluetooth_connected,
+                    size: 40,
+                    color: connectedDevice == null ? Colors.grey : Colors.blueAccent,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    connectedDevice == null ? "No device connected" : "Connected to: ${connectedDevice!.name}",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
-              child: const Center(child: Text("Podemos meter aqui a live translation em simplified language e embaixo em braile, por exemplo")),
             ),
 
-            // Add more content here as needed
+            const SizedBox(height: 30),
+            const Text("Modes", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+
+            // LISTA DE MODOS (Só ativa se houver um device selecionado)
+            Opacity(
+              opacity: connectedDevice == null ? 0.5 : 1.0,
+              child: Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                elevation: 0,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.edit, color: Color.fromARGB(255, 98, 255, 77)),
+                      title: const Text("Writer Mode"),
+                      subtitle: const Text("Morse Binary Tree Guide"),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: connectedDevice == null ? null : () => openWriter(connectedDevice!),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.visibility, color: Colors.blueAccent),
+                      title: const Text("Reader Mode"),
+                      subtitle: const Text("View incoming messages"),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: connectedDevice == null ? null : () => openReader(connectedDevice!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            if (connectedDevice == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 20),
+                child: Center(child: Text("Connect to a device to unlock modes", style: TextStyle(color: Colors.grey))),
+              ),
           ],
         ),
       ),
-
-      // FAB triggers scan
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: isScanning ? null : startScan,
         backgroundColor: Colors.black,
-        child: AnimatedRotation(
-          turns: isScanning ? 1 : 0,
-          duration: const Duration(seconds: 1),
-          child: Icon(isScanning ? Icons.sync : Icons.bluetooth),
-        ),
+        label: Text(isScanning ? "Scanning..." : "Search Devices"),
+        icon: Icon(isScanning ? Icons.sync : Icons.search),
       ),
     );
   }
