@@ -31,43 +31,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // -------------------- SCAN LOGIC --------------------
   void startScan() {
-    setState(() {
-      isScanning = true;
-      _bleDevices = [];
-      _fakeDevices = [];
-      devices = [];
-    });
+  setState(() {
+    isScanning = true;
+    _bleDevices = [];
+    _fakeDevices = [];
+    devices = [];
+  });
 
-    _bleSub?.cancel();
-    _fakeSub?.cancel();
+  _bleSub?.cancel();
+  _fakeSub?.cancel();
 
-    // Listen to BLE
-    _bleSub = bleDataSource.getDevices().listen((foundDevices) {
-      _bleDevices = foundDevices;
-      _updateDevices();
-    });
+  _bleSub = bleDataSource.getDevices().listen((found) {
+    _bleDevices = found;
+    _updateDevices();
+  });
 
-    // Listen to Fake
-    _fakeSub = fakedataSource.getDevices().listen((foundDevices) {
-      _fakeDevices = foundDevices;
-      _updateDevices();
-    });
+  _fakeSub = fakedataSource.getDevices().listen((found) {
+    _fakeDevices = found;
+    _updateDevices();
+  });
 
-    // Timer to stop scanning after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) setState(() => isScanning = false);
-    });
+  Future.delayed(const Duration(seconds: 5), () {
+    if (mounted) setState(() => isScanning = false);
+  });
 
-    // Show bottom sheet with scan results
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: _buildScanResults(),
-      ),
-    );
-  }
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) {
+      // O segredo está aqui:
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setSheetState) {
+          
+          // Criamos um Timer para forçar o Sheet a redesenhar 
+          // sempre que a lista global 'devices' mudar
+          Timer.periodic(const Duration(milliseconds: 500), (timer) {
+            if (context.mounted) {
+              setSheetState(() {}); // Atualiza o interior do BottomSheet
+            } else {
+              timer.cancel();
+            }
+          });
+
+          return SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: _buildScanResults(),
+          );
+        },
+      );
+    },
+  );
+}
 
   void _updateDevices() {
     final Map<String, Device> all = {};
