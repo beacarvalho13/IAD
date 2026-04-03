@@ -21,16 +21,16 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/logo/bg.png
+    - assets/images/logo/splash.png
 
 # ==================== FLUTTER NATIVE SPLASH CONFIG ====================
 flutter_native_splash:
-  color: "#42a5f5"   # this is the background color
-  image: assets/images/logo/bg.png
+  color: "#FFFFFF"   # this is the background color
+  image: assets/images/logo/splash.png
   android: true
   ios: true
   fullscreen: true
 
   android_12:
-    image: assets/images/logo/bg.png
-    icon_background_color: "#42a5f5"
+    image: assets/images/logo/splash.png
+    icon_background_color: "#FFFFFF"
