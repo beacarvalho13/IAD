@@ -4,7 +4,6 @@ import '../models/device.dart';
 import 'device_data_source.dart';
 
 class FakeDeviceDataSource implements DeviceDataSource {
-  final Random _random = Random();
 
   @override
   Stream<List<Device>> getDevices() async* {
@@ -17,53 +16,48 @@ class FakeDeviceDataSource implements DeviceDataSource {
 
   @override
   Stream<int> getSensorValue(Device device, String sensor) async* {
-    // Map letters to simplified Morse (dot = 83, dash = 76, end-of-letter = 32)
     final morseMap = {
-      'A': [83, 76, 32], // .-
-      'B': [76, 83, 83, 83, 32], // -...
-      'C': [76, 83, 76, 83, 32], // -.-.
-      'H': [83, 83, 83, 83, 32], // ....
-      'E': [83, 32], // .
-      'L': [83, 76, 83, 83, 32], // .-..
-      'O': [76, 76, 76, 32], // ---
+      'H': ['.', '.', '.', '.'],
+      'E': ['.'],
+      'L': ['.', '-', '.', '.'],
+      'O': ['-', '-', '-'],
     };
 
-    // Example message to simulate
     final message = "HELLO";
 
-    // Flatten message into a Morse sequence
-    List<int> morseSequence = [];
-    for (var letter in message.split('')) {
-      if (morseMap.containsKey(letter)) {
-        morseSequence.addAll(morseMap[letter]!);
-      } else {
-        morseSequence.add(32); // unknown letter -> just space
-      }
-    }
+    const int pressValue = 80; // above threshold
+    const int idleValue = 0;   // below threshold
 
-    int index = 0;
+    const int dotTime = 500;     // short press
+    const int dashTime = 1000;    // long press
+    const int symbolGap = 500;   // between dots/dashes
+    const int letterGap = 3000;   // between letters
+    const int wordGap = 5000;    // between words
 
     while (true) {
-      int signal = morseSequence[index];
-      yield signal;
+      for (var letter in message.split('')) {
+        final code = morseMap[letter] ?? [];
 
-      // Dot = short pause, Dash = longer, End-of-letter = slightly longer
-      int delay;
-      if (signal == 83) {
-        delay = 300 + _random.nextInt(200); // dot
-      } else if (signal == 76) {
-        delay = 700 + _random.nextInt(200); // dash
-      } else {
-        delay = 500 + _random.nextInt(200); // end-of-letter
+        for (var symbol in code) {
+
+          yield pressValue;
+
+          if (symbol == '.') {
+            await Future.delayed(Duration(milliseconds: dotTime));
+          } else {
+            await Future.delayed(Duration(milliseconds: dashTime));
+          }
+
+          yield idleValue;
+          await Future.delayed(Duration(milliseconds: symbolGap));
+        }
+
+        // Letter gap (longer release)
+        await Future.delayed(Duration(milliseconds: letterGap));
       }
 
-      await Future.delayed(Duration(milliseconds: delay));
-
-      index++;
-      if (index >= morseSequence.length) {
-        index = 0; // loop message
-        await Future.delayed(Duration(milliseconds: 1000)); // pause between messages
-      }
+      // Word gap
+      await Future.delayed(Duration(milliseconds: wordGap));
     }
   }
 }

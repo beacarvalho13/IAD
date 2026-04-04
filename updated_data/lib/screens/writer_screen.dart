@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../data/device_data_source.dart';
 import '../models/device.dart';
@@ -13,19 +15,71 @@ class WriterScreen extends StatefulWidget {
 }
 
 class _WriterScreenState extends State<WriterScreen> {
-  String currentPath = ""; // Ex: ".-"
-  String finalMessage = "";
+  String currentPath = "";      // Tracks current letter in Morse
+  String currentMorseLine = ""; // Full line of Morse code
+  String finalMessage = "";     // Translated letters
 
+  int _pressStartTime = 0;
+  int _lastReleaseTime = 0;
+  bool _isPressing = false;
+
+  static const int threshold = 50;        // force threshold (adjust!)
+  static const int dotDuration = 500;     // < 300ms = dot
+  static const int dashDuration = 1000;    // > 300ms = dash
+  static const int letterPause = 3000; // > 2s = new letter
+  static const int wordPause = 5000;   // > 4s = new word
+
+  late Stream<int> _sensorStream;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _sensorStream = widget.dataSource.getSensorValue(
+      widget.device,
+      "6E400003-B5A3-F393-E0A9-E50E24DCCA9E",
+    );
+
+    // Timer checks letter/word pauses independently
+    Timer.periodic(const Duration(milliseconds: 50), (_) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      if (!_isPressing && currentPath.isNotEmpty) {
+        final sinceRelease = now - _lastReleaseTime;
+
+        // Letter completed
+        if (sinceRelease > letterPause && sinceRelease <= wordPause) {
+          setState(() {
+            finalMessage += _translate(currentPath);
+            currentMorseLine += " ";
+            currentPath = "";
+          });
+        }
+        // Word completed
+        else if (sinceRelease > wordPause) {
+          setState(() {
+            finalMessage += _translate(currentPath);
+            finalMessage += " ";       // Space between words
+            currentMorseLine += "   "; // Extra space in Morse line
+            currentPath = "";
+          });
+        }
+      }
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A), // Fundo escuro para o neon brilhar
       appBar: AppBar(title: const Text("Writer Mode"), backgroundColor: Colors.transparent),
       body: StreamBuilder<int>(
-        stream: widget.dataSource.getSensorValue(widget.device, "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"),
+        stream: _sensorStream,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            _processInput(snapshot.data!);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _processInput(snapshot.data!);
+            });
           }
 
           return Column(
@@ -38,19 +92,33 @@ class _WriterScreenState extends State<WriterScreen> {
                   painter: MorseTreePainter(currentPath: currentPath),
                 ),
               ),
-              
+
               // Texto em tempo real
-              Container(
+               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.black26,
-                  borderRadius: BorderRadius.circular(20)
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Current: $currentPath", style: const TextStyle(color: Colors.white70, fontSize: 18)),
+                    Text(
+                    "Last sensor value: ${snapshot.data}",
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                    Text(
+                      "Morse code: $currentMorseLine",
+                      style: const TextStyle(color: Colors.white70, fontSize: 18),
+                    ),
                     const SizedBox(height: 10),
-                    Text(finalMessage, style: const TextStyle(color: Colors.blueAccent, fontSize: 32, fontWeight: FontWeight.bold)),
+                    Text(
+                      "Message: $finalMessage",
+                      style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          ),
+                    ),
                   ],
                 ),
               ),
@@ -63,20 +131,33 @@ class _WriterScreenState extends State<WriterScreen> {
   }
 
   void _processInput(int value) {
-    // Lógica: O Arduino envia o sinal e nós atualizamos o path
-    // Exemplo: 1 para ponto, 2 para traço, 0 para fim de letra
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // ---------------- PRESS ----------------
+    if (value > threshold && !_isPressing) {
+      _isPressing = true;
+      _pressStartTime = now;
+    }
+
+    // ---------------- RELEASE ----------------
+    else if (value <= threshold && _isPressing) {
+      _isPressing = false;
+
+      final duration = now - _pressStartTime;
+      _lastReleaseTime = now;
+
       setState(() {
-        if (value == 83) currentPath += "."; // 'S' de Short
-        if (value == 76) currentPath += "-"; // 'L' de Long
-        if (value == 32 && currentPath.isNotEmpty) {
-          // Traduzir (simplificado) e adicionar à mensagem
-          finalMessage += _translate(currentPath);
-          currentPath = "";
+        if (duration < dotDuration) {
+          currentPath += ".";
+          currentMorseLine += ".";
+        } else {
+          currentPath += "-";
+          currentMorseLine += "-";
         }
       });
-    });
+    }
   }
+
 
   String _translate(String path) {
     const morseAlphabet = {
