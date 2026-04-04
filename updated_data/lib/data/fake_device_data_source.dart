@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:math';
 import '../models/device.dart';
 import 'device_data_source.dart';
 
 class FakeDeviceDataSource implements DeviceDataSource {
-
   @override
   Stream<List<Device>> getDevices() async* {
     await Future.delayed(const Duration(seconds: 2));
@@ -16,48 +14,54 @@ class FakeDeviceDataSource implements DeviceDataSource {
 
   @override
   Stream<int> getSensorValue(Device device, String sensor) async* {
+    // 1 = dot, 2 = dash, 0 = idle (gap)
+    const int dotSignal = 1;
+    const int dashSignal = 2;
+    const int idle = 0;
+
     final morseMap = {
-      'H': ['.', '.', '.', '.'],
-      'E': ['.'],
-      'L': ['.', '-', '.', '.'],
-      'O': ['-', '-', '-'],
+      'H': [dotSignal, dotSignal, dotSignal, dotSignal],
+      'E': [dotSignal],
+      'L': [dotSignal, dashSignal, dotSignal, dotSignal],
+      'O': [dashSignal, dashSignal, dashSignal],
     };
 
-    final message = "HELLO";
+    const message = "HELLO";
 
-    const int pressValue = 80; // above threshold
-    const int idleValue = 0;   // below threshold
-
-    const int dotTime = 500;     // short press
-    const int dashTime = 1000;    // long press
-    const int symbolGap = 500;   // between dots/dashes
-    const int letterGap = 3000;   // between letters
-    const int wordGap = 5000;    // between words
+    const int symbolTime = 300; // time each dot/dash is active
+    const int symbolGap = 200;  // gap between symbols
+    const int letterGap = 800;  // gap between letters
+    const int wordGap = 1500;   // gap between words
+    const int idleStep = 100;   // how often to send idle during gaps
 
     while (true) {
-      for (var letter in message.split('')) {
-        final code = morseMap[letter] ?? [];
+      for (var char in message.split('')) {
+        final code = morseMap[char.toUpperCase()] ?? [];
 
+        // Send each dot/dash
         for (var symbol in code) {
+          yield symbol;
+          await Future.delayed(Duration(milliseconds: symbolTime));
 
-          yield pressValue;
-
-          if (symbol == '.') {
-            await Future.delayed(Duration(milliseconds: dotTime));
-          } else {
-            await Future.delayed(Duration(milliseconds: dashTime));
+          // Send idle during symbol gap
+          for (int i = 0; i < symbolGap ~/ idleStep; i++) {
+            yield idle;
+            await Future.delayed(Duration(milliseconds: idleStep));
           }
-
-          yield idleValue;
-          await Future.delayed(Duration(milliseconds: symbolGap));
         }
 
-        // Letter gap (longer release)
-        await Future.delayed(Duration(milliseconds: letterGap));
+        // Letter gap (continuous idle)
+        for (int i = 0; i < letterGap ~/ idleStep; i++) {
+          yield idle;
+          await Future.delayed(Duration(milliseconds: idleStep));
+        }
       }
 
-      // Word gap
-      await Future.delayed(Duration(milliseconds: wordGap));
+      // Word gap (continuous idle)
+      for (int i = 0; i < wordGap ~/ idleStep; i++) {
+        yield idle;
+        await Future.delayed(Duration(milliseconds: idleStep));
+      }
     }
   }
 }
