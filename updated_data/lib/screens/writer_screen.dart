@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../data/device_data_source.dart';
 import '../models/device.dart';
@@ -30,8 +31,8 @@ class _WriterScreenState extends State<WriterScreen> {
   };
 
   // Timing thresholds
-  static const int letterGapThreshold = 3000; // ms for letter gap
-  static const int wordGapThreshold = 7000;  // ms for word gap
+  static const int letterGapThreshold = 1000; // ms for letter gap
+  static const int wordGapThreshold = 2000;  // ms for word gap
 
   @override
   void initState() {
@@ -58,6 +59,9 @@ class _WriterScreenState extends State<WriterScreen> {
           currentPath = "";
           setState(() {});
 
+          // Push the updated message to Reader
+          MessageBus.updateMessage(finalMessage);
+
           // Clear the word after word gap
           Future.delayed(Duration(milliseconds: wordGapThreshold), () {
             if (_lastInputTime != null &&
@@ -65,6 +69,9 @@ class _WriterScreenState extends State<WriterScreen> {
               setState(() {
                 finalMessage = ""; // clear instantly
               });
+
+              // Clear Reader as well
+              MessageBus.updateMessage(finalMessage);
             }
           });
         }
@@ -96,12 +103,14 @@ class _WriterScreenState extends State<WriterScreen> {
           Expanded(
             flex: 3,
             child: InteractiveViewer(
-              boundaryMargin: const EdgeInsets.all(200),
-              minScale: 0.5,
-              maxScale: 2.5,
+              boundaryMargin: const EdgeInsets.all(500),
+              minScale: 1.0,
+              maxScale: 1.0,
+              panEnabled: true,
+              scaleEnabled: false,
               child: SizedBox(
-                width: 1000,  // 👈 give your tree space
-                height: 800,
+                width: 1500,
+                height: 1200,
                 child: CustomPaint(
                   painter: MorseTreePainter(
                     currentPath: currentPath,
@@ -155,37 +164,50 @@ class MorseTreePainter extends CustomPainter {
       ..color = Colors.white10
       ..strokeWidth = 2;
 
-    _drawNode(canvas, size.width / 2, 50, size.width / 3, 0, "", size);
+    _drawNode(canvas, 40, size.height/2 , size.height/3 , 0, "",size);
   }
 
   void _drawNode(Canvas canvas, double x, double y, double spacing, int level, String path, Size size) {
     if (level > 4) return;
+
     final bool isActive = currentPath == path;
     final String letter = morseMap[path] ?? "";
 
-    const double verticalGap = 100; 
+    const double horizontalGap = 100; 
 
     canvas.drawCircle(Offset(x, y), 14,
         Paint()..color = isActive ? Colors.blueAccent : Colors.white24);
     
-    // Draw letter if exists
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: letter,
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
-
+    // Draw letter if exist
+    if (level > 0 && letter.isNotEmpty) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: letter,
+          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
+    }
     
     if (level < 4) {
-      _drawBranch(canvas, x, y, x - spacing, y + 80, paintLine(path + "."));
-      _drawNode(canvas, x - spacing, y + 80, spacing / 2, level + 1, path + ".", size);
-      _drawBranch(canvas, x, y, x + spacing, y + 80, paintLine(path + "-"));
-      _drawNode(canvas, x + spacing, y + 80, spacing / 2, level + 1, path + "-", size);
+      double nextspacing = spacing * 0.5;
+
+      _drawBranch(canvas, x, y, x + horizontalGap, y - spacing, paintLine(path + "."), path + ".");
+      _drawNode(canvas, x + horizontalGap, y - spacing, nextspacing , level + 1, path + ".", size);
+      _drawBranch(canvas, x, y, x + horizontalGap, y + spacing, paintLine(path + "-"), path + "-");
+      _drawNode(canvas, x + horizontalGap, y + spacing, nextspacing , level + 1, path + "-", size);
+    }
+
+    if (isActive) {
+      canvas.drawCircle(
+        Offset(x, y),
+        28,
+        Paint()
+          ..color = Colors.greenAccent.withOpacity(0.25)
+          ..style = PaintingStyle.fill,
+      );
     }
   }
 
@@ -201,8 +223,49 @@ class MorseTreePainter extends CustomPainter {
       ..strokeWidth = active ? 5 : (nextStep ? 4 : 2);
   }
 
-  void _drawBranch(Canvas canvas, double x1, double y1, double x2, double y2, Paint p) {
-    canvas.drawLine(Offset(x1, y1 + 15), Offset(x2, y2 - 15), p);
+  void _drawBranch(Canvas canvas, double x1, double y1, double x2, double y2, Paint p, String targetPath) {
+    
+    const double radius = 16;
+
+    // direction vector
+    final dx = x2 - x1;
+    final dy = y2 - y1;
+    final dist = sqrt(dx * dx + dy * dy);
+
+    // normalize
+    final ux = dx / dist;
+    final uy = dy / dist;
+
+    // start/end points shifted to circle edge
+    final start = Offset(
+      x1 + ux * radius,
+      y1 + uy * radius,
+    );
+
+    final end = Offset(
+      x2 - ux * radius,
+      y2 - uy * radius,
+    );
+
+    canvas.drawLine(start, end, p);
+
+    final textPainter = TextPainter(
+        text: TextSpan(
+          text: targetPath.endsWith('.') ? '.' : '-',
+          style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255), fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+
+      const double offset = 8; // distance from branch
+      final labelOffsetY = targetPath.endsWith('.') ? -offset : offset;
+
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
+      );
+
   }
 
   @override
