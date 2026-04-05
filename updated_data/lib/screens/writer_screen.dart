@@ -147,7 +147,7 @@ class MorseTreePainter extends CustomPainter {
     final bool isActive = currentPath == path;
     final String letter = morseMap[path] ?? "";
 
-    const double horizontalGap = 100; 
+    const double verticalGap = 50; 
 
     canvas.drawCircle(Offset(x, y), 14,
         Paint()..color = isActive ? Colors.blueAccent : Colors.white24);
@@ -166,13 +166,29 @@ class MorseTreePainter extends CustomPainter {
     }
     
     if (level < 4) {
-      double nextspacing = spacing * 0.5;
+      double nextspacing = spacing * 0.4;
+      double direction = (path.startsWith('.')) ? -1 : 1; // Up for dot, down for dash
+      if (level == 0) {
+        _drawBranch(canvas, x, y, x, y - verticalGap, paintLine(path + "."), path + ".");
+        _drawNode(canvas, x, y - verticalGap, nextspacing, level + 1, path + ".", size);
+        _drawBranch(canvas, x, y, x, y + verticalGap, paintLine(path + "-"), path + "-");
+        _drawNode(canvas, x, y + verticalGap, nextspacing, level + 1, path + "-", size);
+      }
+      else {
+        if (direction == 1) {
+          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine(path + "."), path + ".");
+          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, path + ".", size);
+          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine(path + "-"), path + "-");
+          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, path + "-", size);
 
-      _drawBranch(canvas, x, y, x + horizontalGap, y - spacing, paintLine(path + "."), path + ".");
-      _drawNode(canvas, x + horizontalGap, y - spacing, nextspacing , level + 1, path + ".", size);
-      _drawBranch(canvas, x, y, x + horizontalGap, y + spacing, paintLine(path + "-"), path + "-");
-      _drawNode(canvas, x + horizontalGap, y + spacing, nextspacing , level + 1, path + "-", size);
-    }
+        } else {
+          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine(path + "."), path + ".");
+          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, path + ".", size);
+          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine(path + "-"), path + "-");
+          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, path + "-", size);
+          }
+        }
+      } 
 
     if (isActive) {
       canvas.drawCircle(
@@ -223,10 +239,10 @@ class MorseTreePainter extends CustomPainter {
 
     canvas.drawLine(start, end, p);
 
-    """
+    
     final textPainter = TextPainter(
         text: TextSpan(
-          text: targetPath.endsWith('.') ? '.' : '-',
+          text: targetPath.endsWith('.') ? '.' : '—',
           style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255), fontSize: 15, fontWeight: FontWeight.bold),
         ),
         textDirection: TextDirection.ltr,
@@ -240,7 +256,7 @@ class MorseTreePainter extends CustomPainter {
         canvas,
         Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
       );
-    """;
+    ;
 
     }
 
