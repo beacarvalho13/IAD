@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:meu_projeto/services/morse_decoder_service.dart';
 import '../models/device.dart';
 import '../widgets/device_card.dart';
-import 'device_screen.dart';
 import 'writer_screen.dart'; // Importa o novo ecrã
 import 'reader_screen.dart'; // Importa o novo ecrã
 import '../data/fake_device_data_source.dart';
@@ -96,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // -------------------- NAVEGAÇÃO --------------------
+  
   void selectDevice(Device device) {
     setState(() {
       connectedDevice = device;
@@ -105,20 +106,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void openWriter(Device device) {
     final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+    GlobalMorseService().initDecoder(device, dataSource);
+    
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => WriterScreen(device: device, dataSource: dataSource),
+        builder: (_) => WriterScreen(
+          deviceId: device.id,
+          ),
       ),
     );
   }
 
   void openReader(Device device) {
     final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+    GlobalMorseService().initDecoder(device, dataSource);
+    
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ReaderScreen(device: device, dataSource: dataSource),
+        builder: (_) => ReaderScreen(),
       ),
     );
   }

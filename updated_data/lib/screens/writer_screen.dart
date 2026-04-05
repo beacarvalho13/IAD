@@ -1,96 +1,37 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../data/device_data_source.dart';
-import '../models/device.dart';
+import 'package:meu_projeto/data/fake_device_data_source.dart';
+import 'package:meu_projeto/models/device.dart';
+import 'package:meu_projeto/services/message_bus.dart';
+import '../services/morse_decoder_service.dart';
 
 class WriterScreen extends StatefulWidget {
-  final Device device;
-  final DeviceDataSource dataSource;
+  final String deviceId;
 
-  const WriterScreen({super.key, required this.device, required this.dataSource});
+  const WriterScreen({super.key, required this.deviceId});
 
   @override
   State<WriterScreen> createState() => _WriterScreenState();
 }
 
 class _WriterScreenState extends State<WriterScreen> {
-  String currentPath = "";
-  String finalMessage = "";
-  Timer? _letterTimer;
-  DateTime? _lastInputTime;
-
-  // Morse code map
-  final Map<String, String> morseMap = {
-    '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E',
-    '..-.': 'F', '--.': 'G', '....': 'H', '..': 'I', '.---': 'J',
-    '-.-': 'K', '.-..': 'L', '--': 'M', '-.': 'N', '---': 'O',
-    '.--.': 'P', '--.-': 'Q', '.-.': 'R', '...': 'S', '-': 'T',
-    '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X', '-.--': 'Y',
-    '--..': 'Z',
-  };
-
-  // Timing thresholds
-  static const int letterGapThreshold = 1000; // ms for letter gap
-  static const int wordGapThreshold = 2000;  // ms for word gap
-
+  DeviceMorseDecoder? decoder;
   @override
   void initState() {
     super.initState();
 
-    widget.dataSource
-        .getSensorValue(widget.device, "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
-        .listen(_processInput);
-  }
-
-  void _processInput(int value) {
-    final now = DateTime.now();
-
-    if (value == 1 || value == 2) {
-      currentPath += (value == 1 ? '.' : '-');
-      _lastInputTime = now;
-
-      // Reset letter timer
-      _letterTimer?.cancel();
-      _letterTimer = Timer(Duration(milliseconds: letterGapThreshold), () {
-        if (currentPath.isNotEmpty) {
-          // Translate current letter
-          finalMessage += _translate(currentPath);
-          currentPath = "";
-          setState(() {});
-
-          // Push the updated message to Reader
-          MessageBus.updateMessage(finalMessage);
-
-          // Clear the word after word gap
-          Future.delayed(Duration(milliseconds: wordGapThreshold), () {
-            if (_lastInputTime != null &&
-                DateTime.now().difference(_lastInputTime!).inMilliseconds >= wordGapThreshold) {
-              setState(() {
-                finalMessage = ""; // clear instantly
-              });
-
-              // Clear Reader as well
-              MessageBus.updateMessage(finalMessage);
-            }
-          });
-        }
-      });
-    }
-
-    setState(() {}); // update currentPath
-  }
-
-  String _translate(String path) => morseMap[path] ?? "?";
-
-  @override
-  void dispose() {
-    _letterTimer?.cancel();
-    super.dispose();
+    decoder = GlobalMorseService().getDecoder(widget.deviceId);
+    GlobalMorseService().clearMessage(); // Clear any previous message on start
+  
   }
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<String>(
+          stream: MessageBus.messageStream,
+          builder: (context, snapshot) {
+            final currentMessage = snapshot.data ?? "";
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
@@ -102,24 +43,32 @@ class _WriterScreenState extends State<WriterScreen> {
           // Morse tree visual
           Expanded(
             flex: 3,
-            child: InteractiveViewer(
-              boundaryMargin: const EdgeInsets.all(500),
-              minScale: 1.0,
-              maxScale: 1.0,
-              panEnabled: true,
-              scaleEnabled: false,
-              child: SizedBox(
-                width: 1500,
-                height: 1200,
-                child: CustomPaint(
-                  painter: MorseTreePainter(
-                    currentPath: currentPath,
-                    morseMap: morseMap,
-                  ),
+            child: StreamBuilder<String>(
+              stream: MessageBus.currentPathStream,
+              initialData: decoder?.currentPath ?? "",
+              builder: (context, snapshot) {
+                final currentPath = snapshot.data ?? "";
+
+                return InteractiveViewer(
+                      boundaryMargin: const EdgeInsets.all(500),
+                      minScale: 1.0,
+                      maxScale: 1.0,
+                      panEnabled: true,
+                      scaleEnabled: false,
+                      child: SizedBox(
+                        width: 1500,
+                        height: 1200,
+                        child: CustomPaint(
+                          painter: MorseTreePainter(
+                            currentPath: currentPath,
+                            morseMap: decoder!.morseMap,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          ),
 
           // Text box for current and final message
           Container(
@@ -129,28 +78,53 @@ class _WriterScreenState extends State<WriterScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
-              children: [
-                Text("Current: $currentPath",
-                    style: const TextStyle(color: Colors.white70, fontSize: 18)),
-                const SizedBox(height: 10),
-                Text(
-                  finalMessage,
-                  style: const TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  children: [
+                    StreamBuilder<String>(
+                      stream: MessageBus.currentPathStream,
+                      initialData: decoder?.currentPath ?? "",
+                      builder: (context, pathSnapshot) {
+                        final currentPath = pathSnapshot.data ?? "";
+                        return Text(
+                          "Current: $currentPath",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 18,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      currentMessage.isEmpty
+                          ? "Decoded message will appear here"
+                          : currentMessage,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.pinkAccent,
+            onPressed: () {
+              GlobalMorseService().clearMessage();
+              setState(() {}); // rebuild to reset currentPath display
+            },
+            child: const Icon(
+              Icons.delete_outline,
+              size: 20, // <-- smaller size
             ),
           ),
-          const SizedBox(height: 40),
-        ],
-      ),
+        );
+      },
     );
   }
 }
-
 // Morse Tree Painter (unchanged)
 class MorseTreePainter extends CustomPainter {
   final String currentPath;
@@ -249,6 +223,7 @@ class MorseTreePainter extends CustomPainter {
 
     canvas.drawLine(start, end, p);
 
+    """
     final textPainter = TextPainter(
         text: TextSpan(
           text: targetPath.endsWith('.') ? '.' : '-',
@@ -265,8 +240,9 @@ class MorseTreePainter extends CustomPainter {
         canvas,
         Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
       );
+    """;
 
-  }
+    }
 
   @override
   bool shouldRepaint(MorseTreePainter oldDelegate) =>

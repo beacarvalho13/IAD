@@ -13,7 +13,12 @@ class FakeDeviceDataSource implements DeviceDataSource {
   }
 
   @override
-  Stream<int> getSensorValue(Device device, String sensor) async* {
+  Stream<int> getSensorValue(Device device, String sensor) {
+    return _fakeSensorGenerator();
+  }
+
+  Stream<int> _fakeSensorGenerator() async* {
+
     // 1 = dot, 2 = dash, 0 = idle (gap)
     const int dotSignal = 1;
     const int dashSignal = 2;
@@ -27,14 +32,13 @@ class FakeDeviceDataSource implements DeviceDataSource {
     };
 
     const message = "HELLO";
-
-    const int symbolTime = 300; // time each dot/dash is active
+    const int symbolTime = 400; // time each dot/dash is active
     const int symbolGap = 500;  // gap between symbols
     const int letterGap = 1000;  // gap between letters
-    const int wordGap = 200;   // gap between words
+    const int wordGap = 2000;   // gap between words
     const int idleStep = 100;   // how often to send idle during gaps
 
-    while (true) {
+    while(true){
       for (var char in message.split('')) {
         final code = morseMap[char.toUpperCase()] ?? [];
 
@@ -63,5 +67,5 @@ class FakeDeviceDataSource implements DeviceDataSource {
         await Future.delayed(Duration(milliseconds: idleStep));
       }
     }
+   }
   }
-}

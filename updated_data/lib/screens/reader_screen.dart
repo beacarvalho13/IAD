@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/device.dart';
-import '../data/device_data_source.dart';
+import 'package:meu_projeto/data/fake_device_data_source.dart';
+import 'package:meu_projeto/services/morse_decoder_service.dart';
+import '../services/message_bus.dart';
+
+
 
 class ReaderScreen extends StatefulWidget {
-  final Device device;
-  final DeviceDataSource dataSource;
-
-  const ReaderScreen({super.key, required this.device, required this.dataSource});
+  const ReaderScreen({super.key});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -19,6 +19,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
     void initState() {
       super.initState();
+
+      GlobalMorseService().clearMessage();    
 
       // Listen to the final decoded message from the data source / Writer
       MessageBus.messageStream.listen((newMessage) {
@@ -67,9 +69,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() => receivedMessage = ""),
-        child: const Icon(Icons.delete_outline),
-      ),
+      onPressed: () {
+        GlobalMorseService().clearMessage(); // Clear global finalMessage
+        setState(() => receivedMessage = "");
+      },
+      child: const Icon(Icons.delete_outline),
+    ),
     );
   }
 }
