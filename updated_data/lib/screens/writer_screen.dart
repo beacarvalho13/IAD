@@ -30,8 +30,8 @@ class _WriterScreenState extends State<WriterScreen> {
   };
 
   // Timing thresholds
-  static const int letterGapThreshold = 800; // ms for letter gap
-  static const int wordGapThreshold = 1500;  // ms for word gap
+  static const int letterGapThreshold = 3000; // ms for letter gap
+  static const int wordGapThreshold = 7000;  // ms for word gap
 
   @override
   void initState() {
@@ -95,9 +95,20 @@ class _WriterScreenState extends State<WriterScreen> {
           // Morse tree visual
           Expanded(
             flex: 3,
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: MorseTreePainter(currentPath: currentPath),
+            child: InteractiveViewer(
+              boundaryMargin: const EdgeInsets.all(200),
+              minScale: 0.5,
+              maxScale: 2.5,
+              child: SizedBox(
+                width: 1000,  // 👈 give your tree space
+                height: 800,
+                child: CustomPaint(
+                  painter: MorseTreePainter(
+                    currentPath: currentPath,
+                    morseMap: morseMap,
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -134,7 +145,9 @@ class _WriterScreenState extends State<WriterScreen> {
 // Morse Tree Painter (unchanged)
 class MorseTreePainter extends CustomPainter {
   final String currentPath;
-  MorseTreePainter({required this.currentPath});
+  final Map<String, String> morseMap;
+
+  MorseTreePainter({required this.currentPath, required this.morseMap});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -142,15 +155,33 @@ class MorseTreePainter extends CustomPainter {
       ..color = Colors.white10
       ..strokeWidth = 2;
 
-    _drawNode(canvas, size.width / 2, 50, size.width / 4, 0, "", size);
+    _drawNode(canvas, size.width / 2, 50, size.width / 3, 0, "", size);
   }
 
   void _drawNode(Canvas canvas, double x, double y, double spacing, int level, String path, Size size) {
-    if (level > 3) return;
+    if (level > 4) return;
     final bool isActive = currentPath == path;
-    canvas.drawCircle(Offset(x, y), 15,
+    final String letter = morseMap[path] ?? "";
+
+    const double verticalGap = 100; 
+
+    canvas.drawCircle(Offset(x, y), 14,
         Paint()..color = isActive ? Colors.blueAccent : Colors.white24);
-    if (level < 3) {
+    
+    // Draw letter if exists
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: letter,
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
+
+    
+    if (level < 4) {
       _drawBranch(canvas, x, y, x - spacing, y + 80, paintLine(path + "."));
       _drawNode(canvas, x - spacing, y + 80, spacing / 2, level + 1, path + ".", size);
       _drawBranch(canvas, x, y, x + spacing, y + 80, paintLine(path + "-"));
@@ -160,9 +191,14 @@ class MorseTreePainter extends CustomPainter {
 
   Paint paintLine(String targetPath) {
     bool active = currentPath.startsWith(targetPath);
+    bool nextStep = targetPath == currentPath + "." || targetPath == currentPath + "-";
+    
     return Paint()
-      ..color = active ? Colors.blueAccent : Colors.white12
-      ..strokeWidth = active ? 4 : 2;
+      ..color = nextStep 
+        ? Colors.greenAccent 
+        : active 
+          ? Colors.blueAccent : Colors.white12
+      ..strokeWidth = active ? 5 : (nextStep ? 4 : 2);
   }
 
   void _drawBranch(Canvas canvas, double x1, double y1, double x2, double y2, Paint p) {

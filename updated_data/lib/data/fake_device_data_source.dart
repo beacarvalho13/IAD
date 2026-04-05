@@ -29,9 +29,9 @@ class FakeDeviceDataSource implements DeviceDataSource {
     const message = "HELLO";
 
     const int symbolTime = 300; // time each dot/dash is active
-    const int symbolGap = 200;  // gap between symbols
-    const int letterGap = 800;  // gap between letters
-    const int wordGap = 1500;   // gap between words
+    const int symbolGap = 2000;  // gap between symbols
+    const int letterGap = 3000;  // gap between letters
+    const int wordGap = 7000;   // gap between words
     const int idleStep = 100;   // how often to send idle during gaps
 
     while (true) {
