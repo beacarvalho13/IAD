@@ -17,9 +17,31 @@ class MyApp extends StatelessWidget {
       title: 'BLE Sensor App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 255, 68, 233)),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigoAccent, brightness: Brightness.light),
         useMaterial3: true,
-      ),
+
+        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+
+        appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        ),
+
+         floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            // let Flutter use colorScheme.primary automatically
+        ),
+
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15),),
+        ),
+
+        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.black87),),
+        
+        ),
       home: const HomeScreen(),
     );
   }

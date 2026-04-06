@@ -41,8 +41,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: _isNewChar ? Colors.blueAccent.withOpacity(0.1) : Colors.white,
+      backgroundColor: _isNewChar ? colors.primary.withOpacity(0.1) : theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Morse Reader")),
       body: Center(
         child: Padding(
@@ -50,9 +53,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 "MESSAGE RECEIVED",
-                style: TextStyle(letterSpacing: 2, color: Colors.grey),
+                style: TextStyle(letterSpacing: 2, color: colors.outline),
               ),
               const SizedBox(height: 20),
               Text(
@@ -61,7 +64,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: _isNewChar ? Colors.blueAccent : Colors.black,
+                  color: _isNewChar ? colors.primary : colors.onSurface,
                 ),
               ),
             ],

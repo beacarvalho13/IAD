@@ -168,13 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text("Talky Buddy", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
+        title: Text("Talky Buddy", style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -189,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
               ),
@@ -198,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icon(
                     connectedDevice == null ? Icons.bluetooth_disabled : Icons.bluetooth_connected,
                     size: 40,
-                    color: connectedDevice == null ? Colors.grey : Colors.blueAccent,
+                    color: connectedDevice == null ? Colors.grey : colors.primary,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -222,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.edit, color: Color.fromARGB(255, 98, 255, 77)),
+                      leading: Icon(Icons.edit, color: colors.primary),
                       title: const Text("Writer Mode"),
                       subtitle: const Text("Morse Binary Tree Guide"),
                       trailing: const Icon(Icons.chevron_right),
@@ -230,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const Divider(height: 1),
                     ListTile(
-                      leading: const Icon(Icons.visibility, color: Colors.blueAccent),
+                      leading: Icon(Icons.visibility, color: colors.primary),
                       title: const Text("Reader Mode"),
                       subtitle: const Text("View incoming messages"),
                       trailing: const Icon(Icons.chevron_right),
@@ -251,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: isScanning ? null : startScan,
-        backgroundColor: Colors.black,
         label: Text(isScanning ? "Scanning..." : "Search Devices"),
         icon: Icon(isScanning ? Icons.sync : Icons.search),
       ),
