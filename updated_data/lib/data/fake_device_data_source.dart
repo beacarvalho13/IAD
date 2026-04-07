@@ -18,11 +18,10 @@ class FakeDeviceDataSource implements DeviceDataSource {
   }
 
   Stream<int> _fakeSensorGenerator() async* {
-
-    // 1 = dot, 2 = dash, 0 = idle (gap)
     const int dotSignal = 1;
     const int dashSignal = 2;
-    const int idle = 0;
+    const int endOfChar = 3;
+    const int endOfWord = 4;
 
     final morseMap = {
       'H': [dotSignal, dotSignal, dotSignal, dotSignal],
@@ -32,40 +31,31 @@ class FakeDeviceDataSource implements DeviceDataSource {
     };
 
     const message = "HELLO";
-    const int symbolTime = 400; // time each dot/dash is active
-    const int symbolGap = 500;  // gap between symbols
-    const int letterGap = 1000;  // gap between letters
-    const int wordGap = 2000;   // gap between words
-    const int idleStep = 100;   // how often to send idle during gaps
+    const int symbolTime = 400; // duration of dot/dash
+    const int gapTime = 200;    // short pause between symbols, letters, or words
 
-    while(true){
-      for (var char in message.split('')) {
-        final code = morseMap[char.toUpperCase()] ?? [];
+    while (true) {
+      final words = message.split(' ');
+      for (int w = 0; w < words.length; w++) {
+        final word = words[w];
+        for (var char in word.split('')) {
+          final code = morseMap[char.toUpperCase()] ?? [];
 
-        // Send each dot/dash
-        for (var symbol in code) {
-          yield symbol;
-          await Future.delayed(Duration(milliseconds: symbolTime));
-
-          // Send idle during symbol gap
-          for (int i = 0; i < symbolGap ~/ idleStep; i++) {
-            yield idle;
-            await Future.delayed(Duration(milliseconds: idleStep));
+          // Emit dots/dashes
+          for (var symbol in code) {
+            yield symbol;
+            await Future.delayed(Duration(milliseconds: symbolTime + gapTime));
           }
+
+          // End of character
+          yield endOfChar;
+          await Future.delayed(Duration(milliseconds: gapTime));
         }
 
-        // Letter gap (continuous idle)
-        for (int i = 0; i < letterGap ~/ idleStep; i++) {
-          yield idle;
-          await Future.delayed(Duration(milliseconds: idleStep));
-        }
-      }
-
-      // Word gap (continuous idle)
-      for (int i = 0; i < wordGap ~/ idleStep; i++) {
-        yield idle;
-        await Future.delayed(Duration(milliseconds: idleStep));
+        // End of word
+        yield endOfWord;
+        await Future.delayed(Duration(milliseconds: gapTime));
       }
     }
-   }
   }
+}
