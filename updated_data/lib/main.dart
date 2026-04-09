@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:meu_projeto/screens/home_screen.dart';
+import 'package:meu_projeto/models/app_mode.dart';
+import 'package:meu_projeto/screens/home_screen.dart' hide CommunicationMode;
 //import 'screens/home_screen.dart';
 
 void main() {
@@ -13,36 +14,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BLE Sensor App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigoAccent, brightness: Brightness.light),
-        useMaterial3: true,
+    return ValueListenableBuilder<CommunicationMode>(
+      valueListenable: appMode,
+      builder: (context, mode, _) {
+        final isMorse = mode == CommunicationMode.morse;
 
-        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+        return MaterialApp(
+          title: 'BLE Sensor App',
+          debugShowCheckedModeBanner: false,
 
-        appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-        ),
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: isMorse ? Colors.indigoAccent : Colors.pinkAccent,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
 
-         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            // let Flutter use colorScheme.primary automatically
-        ),
-
-        cardTheme: CardThemeData(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15),),
-        ),
-
-        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.black87),),
-        
-        ),
-      home: const HomeScreen(),
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }

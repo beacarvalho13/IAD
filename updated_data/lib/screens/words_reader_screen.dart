@@ -72,7 +72,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
       ),
       floatingActionButton: FloatingActionButton(
       onPressed: () {
-        GlobalMorseService().clearMessage(); // Clear global finalMessage
+        WordsDecoderService().clearMessage(); // Clear global finalMessage
         setState(() => receivedMessage = "");
       },
       child: const Icon(Icons.delete_outline),

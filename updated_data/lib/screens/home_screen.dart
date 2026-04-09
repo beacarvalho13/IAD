@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:meu_projeto/models/app_mode.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../models/device.dart';
@@ -11,11 +12,6 @@ import '../data/ble_device_data_source.dart';
 import '../data/device_data_source.dart';
 import 'words_writer_screen.dart';
 import 'words_reader_screen.dart';
-
-enum CommunicationMode {
-  morse,
-  words,
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void openWriter(Device device) {
     final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
 
-    if (currentMode == CommunicationMode.morse) {
+    if (appMode.value == CommunicationMode.morse) {
       GlobalMorseService().initDecoder(device, dataSource);
 
       Navigator.push(
@@ -143,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void openReader(Device device) {
   final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
 
-  if (currentMode == CommunicationMode.morse) {
+  if (appMode.value == CommunicationMode.morse) {
     GlobalMorseService().initDecoder(device, dataSource);
 
     Navigator.push(
@@ -250,15 +246,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ToggleButtons(
                 borderRadius: BorderRadius.circular(12),
                 isSelected: [
-                  currentMode == CommunicationMode.morse,
-                  currentMode == CommunicationMode.words,
+                  appMode.value == CommunicationMode.morse,
+                  appMode.value == CommunicationMode.words,
                 ],
                 onPressed: (index) {
-                  setState(() {
-                    currentMode = index == 0
-                        ? CommunicationMode.morse
-                        : CommunicationMode.words;
-                  });
+                  appMode.value = index == 0
+                      ? CommunicationMode.morse
+                      : CommunicationMode.words;
                 },
                 children: const [
                   Padding(
