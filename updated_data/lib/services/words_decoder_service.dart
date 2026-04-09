@@ -3,10 +3,12 @@ import '../models/device.dart';
 import '../data/device_data_source.dart';
 import 'message_bus.dart';
 
-class GlobalMorseService {
-  static final GlobalMorseService _instance = GlobalMorseService._internal();
-  factory GlobalMorseService() => _instance;
-  GlobalMorseService._internal();
+
+
+class WordsDecoderService {
+  static final WordsDecoderService _instance = WordsDecoderService._internal();
+  factory WordsDecoderService() => _instance;
+  WordsDecoderService._internal();
 
   final Map<String, DeviceMorseDecoder> _decoders = {};
 
@@ -20,11 +22,12 @@ class GlobalMorseService {
   }
 
   void clearMessage() {
-    // Clear all decoder messages
     for (var decoder in _decoders.values) {
       decoder.finalMessage = "";
+      decoder.currentPath = "";
     }
     MessageBus.updateMessage("");
+    MessageBus.updateCurrentPath("");
   }
   
   DeviceMorseDecoder? getDecoder(String deviceId) => _decoders[deviceId];
@@ -51,12 +54,16 @@ class DeviceMorseDecoder {
 
 
   static const Map<String, String> wordMap = {
-  ".": "YES",
-  "..": "NO",
-  "-": "HELLO",
-  ".-": "THANK YOU",
-  "--": "GOODBYE",
-  "-.": "PLEASE",}
+    ".": "YES",
+    "..": "NO",
+    "-": "HELLO",
+    "--": "GOODBYE",
+    "-.": "MORE",
+    "-..": "LESS",
+    "..-": "PLEASE",
+    ".-": "THANK YOU",
+    "...": "GOOD",
+    "---": "BAD"}
   ;
 
   DeviceMorseDecoder({required this.device, required this.dataSource}) {
@@ -77,7 +84,7 @@ class DeviceMorseDecoder {
       _letterTimer?.cancel();
       _letterTimer = Timer(Duration(milliseconds: letterGapThreshold), () {
         if (currentPath.isNotEmpty) {
-          finalMessage += wordMap[currentPath] ?? "?";
+          finalMessage += "${wordMap[currentPath] ?? "?"} ";
           currentPath = "";
           
           MessageBus.updateMessage(finalMessage);

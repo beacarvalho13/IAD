@@ -164,22 +164,22 @@ class MorseTreePainter extends CustomPainter {
       double nextspacing = spacing * 0.4;
       double direction = (path.startsWith('.')) ? -1 : 1; // Up for dot, down for dash
       if (level == 0) {
-        _drawBranch(canvas, x, y, x, y - verticalGap, paintLine(path + ".", colors), path + ".");
-        _drawNode(canvas, x, y - verticalGap, nextspacing, level + 1, path + ".", size, colors);
-        _drawBranch(canvas, x, y, x, y + verticalGap, paintLine(path + "-", colors), path + "-");
-        _drawNode(canvas, x, y + verticalGap, nextspacing, level + 1, path + "-", size, colors);
+        _drawBranch(canvas, x, y, x, y - verticalGap, paintLine("$path.", colors), "$path.");
+        _drawNode(canvas, x, y - verticalGap, nextspacing, level + 1, "$path.", size, colors);
+        _drawBranch(canvas, x, y, x, y + verticalGap, paintLine("$path-", colors), "$path-");
+        _drawNode(canvas, x, y + verticalGap, nextspacing, level + 1, "$path-", size, colors);
       }
       else {
         if (direction == 1) {
-          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine(path + ".", colors), path + ".");
-          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, path + ".", size, colors);
-          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine(path + "-", colors), path + "-");
-          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, path + "-", size, colors);
+          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine("$path.", colors), "$path.");
+          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path.", size, colors);
+          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine("$path-", colors), "$path-");
+          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path-", size, colors);
         } else {
-          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine(path + ".", colors), path + ".");
-          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, path + ".", size, colors);
-          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine(path + "-", colors), path + "-");
-          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, path + "-", size, colors);
+          _drawBranch(canvas, x, y, x + spacing, y + (direction*verticalGap), paintLine("$path.", colors), "$path.");
+          _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path.", size, colors);
+          _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine("$path-", colors), "$path-");
+          _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path-", size, colors);
           }
         }
       } 
@@ -197,7 +197,7 @@ class MorseTreePainter extends CustomPainter {
 
   Paint paintLine(String targetPath, ColorScheme colors) {
     bool active = currentPath.startsWith(targetPath);
-    bool nextStep = targetPath == currentPath + "." || targetPath == currentPath + "-";
+    bool nextStep = targetPath == "$currentPath." || targetPath == "$currentPath-";
     
     return Paint()
       ..color = nextStep 
@@ -250,7 +250,6 @@ class MorseTreePainter extends CustomPainter {
         canvas,
         Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
       );
-    ;
 
     }
 

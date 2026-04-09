@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meu_projeto/data/fake_device_data_source.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
 import '../services/message_bus.dart';
 

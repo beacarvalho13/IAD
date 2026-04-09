@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
+import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../models/device.dart';
 import '../widgets/device_card.dart';
 import 'writer_screen.dart'; // Importa o novo ecrã
@@ -125,6 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else {
+      GlobalMorseService().dispose();
+      WordsDecoderService().initDecoder(device, dataSource);
+      
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -149,6 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   } else {
+    GlobalMorseService().dispose();
+    WordsDecoderService().initDecoder(device, dataSource);
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -238,9 +245,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 30),
-
-            const Text("Communication Mode", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
 
             Center(
               child: ToggleButtons(
