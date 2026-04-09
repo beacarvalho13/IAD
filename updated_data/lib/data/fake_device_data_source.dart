@@ -20,8 +20,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
   Stream<int> _fakeSensorGenerator() async* {
     const int dotSignal = 1;
     const int dashSignal = 2;
-    const int endOfChar = 3;
-    const int endOfWord = 4;
+    const int idle = 0;
 
     final morseMap = {
       'H': [dotSignal, dotSignal, dotSignal, dotSignal],
@@ -36,26 +35,35 @@ class FakeDeviceDataSource implements DeviceDataSource {
     const int letterGap = 1000;  // gap between letters
     const int wordGap = 2000;   // gap between words
     const int idleStep = 100;   // how often to send idle during gaps
-
+    
     while(true){
-      for (var char in message.split('')) {
-        final code = morseMap[char.toUpperCase()] ?? [];
+          for (var char in message.split('')) {
+            final code = morseMap[char.toUpperCase()] ?? [];
 
-          // Emit dots/dashes
-          for (var symbol in code) {
-            yield symbol;
-            await Future.delayed(Duration(milliseconds: symbolTime + gapTime));
+            // Send each dot/dash
+            for (var symbol in code) {
+              yield symbol;
+              await Future.delayed(Duration(milliseconds: symbolTime));
+
+              // Send idle during symbol gap
+              for (int i = 0; i < symbolGap ~/ idleStep; i++) {
+                yield idle;
+                await Future.delayed(Duration(milliseconds: idleStep));
+              }
+            }
+
+            // Letter gap (continuous idle)
+            for (int i = 0; i < letterGap ~/ idleStep; i++) {
+              yield idle;
+              await Future.delayed(Duration(milliseconds: idleStep));
+            }
           }
 
-          // End of character
-          yield endOfChar;
-          await Future.delayed(Duration(milliseconds: gapTime));
+          // Word gap (continuous idle)
+          for (int i = 0; i < wordGap ~/ idleStep; i++) {
+            yield idle;
+            await Future.delayed(Duration(milliseconds: idleStep));
+          }
         }
-
-        // End of word
-        yield endOfWord;
-        await Future.delayed(Duration(milliseconds: gapTime));
       }
-    }
-  }
-}
+      }
