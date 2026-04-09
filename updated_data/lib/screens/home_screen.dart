@@ -8,6 +8,13 @@ import 'reader_screen.dart'; // Importa o novo ecrã
 import '../data/fake_device_data_source.dart';
 import '../data/ble_device_data_source.dart';
 import '../data/device_data_source.dart';
+import 'words_writer_screen.dart';
+import 'words_reader_screen.dart';
+
+enum CommunicationMode {
+  morse,
+  words,
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  CommunicationMode currentMode = CommunicationMode.morse;
   List<Device> devices = [];
   bool isScanning = false;
   Device? connectedDevice; // Guarda o dispositivo selecionado
@@ -106,29 +114,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void openWriter(Device device) {
     final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
-    GlobalMorseService().initDecoder(device, dataSource);
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WriterScreen(
-          deviceId: device.id,
+
+    if (currentMode == CommunicationMode.morse) {
+      GlobalMorseService().initDecoder(device, dataSource);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WriterScreen(deviceId: device.id),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WordsWriterScreen(
+            deviceId: device.id,
           ),
-      ),
-    );
+        ),
+      );
+    }
   }
 
   void openReader(Device device) {
-    final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+  final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+
+  if (currentMode == CommunicationMode.morse) {
     GlobalMorseService().initDecoder(device, dataSource);
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ReaderScreen(),
       ),
     );
+  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WordsReaderScreen(
+        ),
+      ),
+    );
   }
+}
 
   @override
   void dispose() {
@@ -209,6 +238,39 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 30),
+
+            const Text("Communication Mode", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+
+            Center(
+              child: ToggleButtons(
+                borderRadius: BorderRadius.circular(12),
+                isSelected: [
+                  currentMode == CommunicationMode.morse,
+                  currentMode == CommunicationMode.words,
+                ],
+                onPressed: (index) {
+                  setState(() {
+                    currentMode = index == 0
+                        ? CommunicationMode.morse
+                        : CommunicationMode.words;
+                  });
+                },
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text("Morse"),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text("Words"),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
             const Text("Modes", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
 

@@ -31,7 +31,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
       'O': [dashSignal, dashSignal, dashSignal],
     };
 
-    const message = "HELLO";
+    const message = "E";
     const int symbolTime = 400; // time each dot/dash is active
     const int symbolGap = 500;  // gap between symbols
     const int letterGap = 1000;  // gap between letters
