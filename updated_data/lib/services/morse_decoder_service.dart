@@ -20,15 +20,16 @@ class GlobalMorseService {
   }
 
   void clearMessage() {
-    // Clear all decoder messages
     for (var decoder in _decoders.values) {
       decoder.finalMessage = "";
+      decoder.currentPath = "";
     }
     MessageBus.updateMessage("");
+    MessageBus.updateCurrentPath("");
   }
-  
+
   DeviceMorseDecoder? getDecoder(String deviceId) => _decoders[deviceId];
-  
+
   void dispose() {
     for (var decoder in _decoders.values) {
       decoder.dispose();
@@ -43,11 +44,6 @@ class DeviceMorseDecoder {
 
   String currentPath = "";
   String finalMessage = "";
-  Timer? _letterTimer;
-  DateTime? _lastInputTime;
-
-  static const int letterGapThreshold = 1000;
-  static const int wordGapThreshold = 2000;
 
   final Map<String, String> morseMap = {
     '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E',
@@ -58,45 +54,47 @@ class DeviceMorseDecoder {
     '--..': 'Z',
   };
 
+  late final StreamSubscription<int> _subscription;
+
   DeviceMorseDecoder({required this.device, required this.dataSource}) {
-    dataSource
-        .getSensorValue(device, "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+    _subscription = dataSource
+        .getSensorValue(device, "e08d4a41-01eb-4fbb-bede-105ae8dbe66c")
         .listen(_processInput);
   }
 
   void _processInput(int value) {
-    final now = DateTime.now();
+    const dot = 1;
+    const dash = 2;
+    const endOfChar = 3;
+    const endOfWord = 4;
 
-    if (value == 1 || value == 2) {
-      currentPath += (value == 1 ? '.' : '-');
-      _lastInputTime = now;
-
+    if (value == dot || value == dash) {
+      // Build current letter
+      currentPath += (value == dot ? '.' : '-');
       MessageBus.updateCurrentPath(currentPath);
+    } 
+    else if (value == endOfChar) {
+      _flushCharacter();
+    } 
+    else if (value == endOfWord) {
+      _flushCharacter();
+      if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
+        finalMessage += " "; // separate words
+        MessageBus.updateMessage(finalMessage);
+      }
+    }
+  }
 
-      _letterTimer?.cancel();
-      _letterTimer = Timer(Duration(milliseconds: letterGapThreshold), () {
-        if (currentPath.isNotEmpty) {
-          finalMessage += morseMap[currentPath] ?? "?";
-          currentPath = "";
-          
-          MessageBus.updateMessage(finalMessage);
-          MessageBus.updateCurrentPath(currentPath);
-        }
-            });
-          } else if (value == 0) {
-            // Check if it's time to insert a space for word gap
-            if (_lastInputTime != null &&
-                DateTime.now().difference(_lastInputTime!).inMilliseconds >=
-                    wordGapThreshold) {
-              if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
-                finalMessage += " "; // add space after word
-                MessageBus.updateMessage(finalMessage);
-              }
-              _lastInputTime = null;
-            }
-          }
-        }
+  void _flushCharacter() {
+    if (currentPath.isEmpty) return;
+    final decoded = morseMap[currentPath] ?? "?";
+    finalMessage += decoded;
+    currentPath = "";
+    MessageBus.updateCurrentPath(currentPath);
+    MessageBus.updateMessage(finalMessage);
+  }
+
   void dispose() {
-    _letterTimer?.cancel();
+    _subscription.cancel();
   }
 }
