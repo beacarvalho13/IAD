@@ -88,7 +88,6 @@ void loop() {
   static bool waitingForTimeout = false;
   static bool signal3Sent = false;
   static bool signal4Sent = false;
-  deviceConnected = true;
 
   //detect pressing and timing
   if (deviceConnected) {
