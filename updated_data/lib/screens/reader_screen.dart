@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
+import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../services/message_bus.dart';
-
 
 
 class ReaderScreen extends StatefulWidget {
@@ -19,6 +19,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     void initState() {
       super.initState();
 
+      WordsDecoderService().clearMessage(); 
       GlobalMorseService().clearMessage();    
 
       // Listen to the final decoded message from the data source / Writer
@@ -37,6 +38,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
       });
     }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

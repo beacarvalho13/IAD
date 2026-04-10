@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:meu_projeto/data/fake_device_data_source.dart';
 import 'package:meu_projeto/models/device.dart';
 import 'package:meu_projeto/services/message_bus.dart';
+import 'package:meu_projeto/services/words_decoder_service.dart' hide DeviceMorseDecoder;
 import '../services/morse_decoder_service.dart';
 
 class WriterScreen extends StatefulWidget {
@@ -22,7 +23,13 @@ class _WriterScreenState extends State<WriterScreen> {
 
     decoder = GlobalMorseService().getDecoder(widget.deviceId);
     GlobalMorseService().clearMessage(); // Clear any previous message on start
-  
+    WordsDecoderService().clearMessage(); // Clear words decoder as well since they share the same input
+  }
+
+  @override
+  void dispose() {
+    GlobalMorseService().getDecoder(widget.deviceId)?.dispose();
+    super.dispose();
   }
 
   @override
@@ -242,8 +249,7 @@ class MorseTreePainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       );
 
-      const double offset = 8; // distance from branch
-      final labelOffsetY = targetPath.endsWith('.') ? -offset : offset;
+      final labelOffsetY = 5;
 
       textPainter.layout();
       textPainter.paint(

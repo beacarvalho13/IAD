@@ -19,7 +19,8 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
     void initState() {
       super.initState();
 
-      WordsDecoderService().clearMessage();    
+      WordsDecoderService().clearMessage();
+      GlobalMorseService().clearMessage();     
 
       // Listen to the final decoded message from the data source / Writer
       MessageBus.messageStream.listen((newMessage) {
@@ -37,7 +38,11 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
       });
     }
 
-
+  @override
+  void dispose() {
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

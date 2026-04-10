@@ -14,10 +14,10 @@ class FakeDeviceDataSource implements DeviceDataSource {
 
   @override
   Stream<int> getSensorValue(Device device, String sensor) {
-    return _fakeSensorGenerator();
+    return _fakeSensorGenerator(device.id);
   }
 
-  Stream<int> _fakeSensorGenerator() async* {
+  Stream<int> _fakeSensorGenerator(String deviceId) async* {
     const int dotSignal = 1;
     const int dashSignal = 2;
     const int endOfChar = 3;
@@ -28,9 +28,21 @@ class FakeDeviceDataSource implements DeviceDataSource {
       'E': [dotSignal],
       'L': [dotSignal, dashSignal, dotSignal, dotSignal],
       'O': [dashSignal, dashSignal, dashSignal],
+      'A': [dotSignal, dashSignal],
+      'B': [dashSignal, dotSignal, dotSignal, dotSignal],
     };
 
-    const message = "E";
+    final possibleMessages = ["HELLO", "SOS", "TEST", "ABC"];
+
+    final String message;
+      if (deviceId == "FAKE_01") {
+        message = "HELLO";
+      } else if (deviceId == "FAKE_02") {
+        message = "E";
+      } else {
+        message = "HELLO";
+      }
+      
     const int symbolTime = 400; // duration of dot/dash
     const int gapTime = 200;    // short pause between symbols, letters, or words
 

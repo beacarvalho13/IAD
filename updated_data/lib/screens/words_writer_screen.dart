@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meu_projeto/services/message_bus.dart';
-import '../services/words_decoder_service.dart';
+import 'package:meu_projeto/services/morse_decoder_service.dart';
+import '../services/words_decoder_service.dart' hide DeviceMorseDecoder;
 
 class WordsWriterScreen extends StatefulWidget {
   final String deviceId;
@@ -30,9 +31,15 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
   @override
   void initState() {
     super.initState();
+    
+    WordsDecoderService().clearMessage(); // Clear any previous message on start~
+    GlobalMorseService().clearMessage(); // Clear Morse decoder as well since they share the same input
+  }
 
-    decoder = WordsDecoderService().getDecoder(widget.deviceId);
-    WordsDecoderService().clearMessage(); // Clear any previous message on start
+  @override
+  void dispose() {
+    WordsDecoderService().getDecoder(widget.deviceId)?.dispose();
+    super.dispose();
   }
 
   @override

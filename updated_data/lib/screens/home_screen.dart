@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:meu_projeto/models/app_mode.dart';
+import 'package:meu_projeto/services/message_bus.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../models/device.dart';
@@ -109,58 +110,110 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pop(context); // Fecha o BottomSheet
   }
 
+    Device _resolveFakeDevice(Device selected) {
+      final isFake = selected.nativeDevice == null;
+
+      if (!isFake) return selected;
+
+      if (appMode.value == CommunicationMode.morse) {
+        return Device(
+          name: "Fake Sensor A",
+          id: "FAKE_01",
+          rssi: -40,
+          nativeDevice: null,
+        );
+      } else {
+        return Device(
+          name: "Fake Sensor B",
+          id: "FAKE_02",
+          rssi: -60,
+          nativeDevice: null,
+        );
+      }
+    }
+
+     void switchMode(CommunicationMode mode) {
+      // Stop everything cleanly first
+      GlobalMorseService().dispose();
+      WordsDecoderService().dispose();
+
+      // Reset shared UI state
+      MessageBus.updateMessage("");
+      MessageBus.updateCurrentPath("");
+
+      // Update global mode
+      appMode.value = mode;
+
+      setState(() {});
+    }
+
   void openWriter(Device device) {
-    final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+    final resolveDevice = _resolveFakeDevice(device);
+    final dataSource = resolveDevice.nativeDevice == null ? fakedataSource : bleDataSource;
+
+    WordsDecoderService().dispose();
+    GlobalMorseService().dispose();
+
+    MessageBus.updateMessage("");
+    MessageBus.updateCurrentPath("");
 
     if (appMode.value == CommunicationMode.morse) {
-      GlobalMorseService().initDecoder(device, dataSource);
+      GlobalMorseService().initDecoder(resolveDevice, dataSource);
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => WriterScreen(deviceId: device.id),
+          builder: (_) => WriterScreen(deviceId: resolveDevice.id),
         ),
       );
     } else {
-      GlobalMorseService().dispose();
-      WordsDecoderService().initDecoder(device, dataSource);
-      
+      WordsDecoderService().initDecoder(resolveDevice, dataSource);
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => WordsWriterScreen(
-            deviceId: device.id,
+            deviceId: resolveDevice.id,
           ),
         ),
       );
     }
   }
 
+
+
   void openReader(Device device) {
-  final dataSource = device.nativeDevice == null ? fakedataSource : bleDataSource;
+    final resolveDevice = _resolveFakeDevice(device);
+    final dataSource = resolveDevice.nativeDevice == null ? fakedataSource : bleDataSource;
 
-  if (appMode.value == CommunicationMode.morse) {
-    GlobalMorseService().initDecoder(device, dataSource);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ReaderScreen(),
-      ),
-    );
-  } else {
+    WordsDecoderService().dispose();
     GlobalMorseService().dispose();
-    WordsDecoderService().initDecoder(device, dataSource);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WordsReaderScreen(
+    MessageBus.updateMessage("");
+    MessageBus.updateCurrentPath("");
+    
+    if (appMode.value == CommunicationMode.morse) {
+      GlobalMorseService().initDecoder(resolveDevice, dataSource);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReaderScreen(),
         ),
-      ),
-    );
+      );
+      
+    } else {
+
+      WordsDecoderService().initDecoder(resolveDevice, dataSource);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WordsReaderScreen(),
+        ),
+      );
+    }
   }
-}
 
   @override
   void dispose() {
@@ -250,9 +303,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   appMode.value == CommunicationMode.words,
                 ],
                 onPressed: (index) {
+                  switchMode(
                   appMode.value = index == 0
                       ? CommunicationMode.morse
-                      : CommunicationMode.words;
+                      : CommunicationMode.words,
+                  );
                 },
                 children: const [
                   Padding(
