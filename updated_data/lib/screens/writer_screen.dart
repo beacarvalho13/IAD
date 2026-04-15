@@ -1,7 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:meu_projeto/data/fake_device_data_source.dart';
-import 'package:meu_projeto/models/device.dart';
 import 'package:meu_projeto/services/message_bus.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart' hide DeviceMorseDecoder;
 import '../services/morse_decoder_service.dart';

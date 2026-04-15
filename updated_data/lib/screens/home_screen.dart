@@ -68,37 +68,23 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setSheetState) {
-            // Timer para forçar o refresh do BottomSheet enquanto a lista 'devices' cresce
-            Timer.periodic(const Duration(milliseconds: 500), (timer) {
-              if (context.mounted) {
-                setSheetState(() {});
-              } else {
-                timer.cancel();
-              }
-            });
-
-            return SizedBox(
-              height: MediaQuery.of(context).size.height * 0.6,
-              child: _buildScanResults(),
-            );
-          },
-        );
-      },
+      builder: (_) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: _buildScanResults(),
+      ),
     );
   }
 
   void _updateDevices() {
     final Map<String, Device> all = {};
+
     for (var d in _fakeDevices) { all[d.id] = d; }
     for (var d in _bleDevices) { all[d.id] = d; }
-    if (mounted) {
-      setState(() {
-        devices = all.values.toList();
-      });
-    }
+    
+    setState(() {
+      devices = all.values.toList();
+    });
+
   }
 
   // -------------------- NAVEGAÇÃO --------------------
@@ -117,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (appMode.value == CommunicationMode.morse) {
         return Device(
-          name: "Fake Sensor A",
+          name: "Fake Sensso or A",
           id: "FAKE_01",
           rssi: -40,
           nativeDevice: null,
@@ -179,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
-
 
 
   void openReader(Device device) {
