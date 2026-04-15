@@ -2,7 +2,6 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-// Não precisamos de Service UUID para Beacon, mas manter o nome ajuda a filtrar no Flutter
 #define DEVICE_NAME "TALKY_BUDDY"
 
 BLEAdvertising *pAdvertising;
@@ -12,7 +11,6 @@ bool isPressing = false;
 unsigned long pressStartTime = 0;
 
 void sendSignal(uint8_t s) {
-  // Em vez de std::string, usamos o tipo String do Arduino
   String mData = "";
   
   // Adicionamos dois bytes: 
@@ -23,8 +21,6 @@ void sendSignal(uint8_t s) {
 
   BLEAdvertisementData advData;
   advData.setName(DEVICE_NAME);
-  
-  // Agora o tipo coincide com o que a biblioteca espera
   advData.setManufacturerData(mData);
 
   pAdvertising->stop(); 
@@ -42,50 +38,60 @@ void setup() {
   BLEDevice::init(DEVICE_NAME);
   pAdvertising = BLEDevice::getAdvertising();
   
-  sendSignal(0); // Inicia com sinal zero
+  sendSignal(0);
 }
 
 void loop() {
   int value = analogRead(fsrPin);
   unsigned long currentTime = millis();
+  
   static unsigned long lastSignalTime = 0;
-  static bool waitingForTimeout = false;
-  static bool signal3Sent = false;
-  static bool signal4Sent = false;
+  static int estadoTimeout = 0; 
 
+  // 1. PRESSIONAR
   if (value > threshold && !isPressing) {
     isPressing = true;
     pressStartTime = currentTime;
-    waitingForTimeout = false;
+    estadoTimeout = 0; 
   }
 
+  // 2. SOLTAR
   if (value <= threshold && isPressing) {
     isPressing = false;
     unsigned long duration = currentTime - pressStartTime;
     uint8_t signal = 0;
+
     if (duration >= 50 && duration < 1000) signal = 1;
     else if (duration >= 1000) signal = 2;
 
     if (signal > 0) {
       sendSignal(signal);
-      lastSignalTime = millis();
-      waitingForTimeout = true;
-      signal3Sent = false;
-      signal4Sent = false;
+      // Forçamos o lastSignalTime a ser o AGORA absoluto
+      lastSignalTime = millis(); 
+      estadoTimeout = 1;         
     }
   }
 
-  if (waitingForTimeout && !isPressing) {
+  // 3. GESTÃO DE TIMEOUTS (Com proteção contra disparos fantasmas)
+  if (!isPressing && estadoTimeout > 0) {
     unsigned long inactivityDuration = currentTime - lastSignalTime;
-    if (inactivityDuration >= 3000 && !signal3Sent) {
-      sendSignal(3);
-      signal3Sent = true;
+
+    // SINAL 3
+    if (estadoTimeout == 1) {
+      // Se a diferença for negativa ou louca (devido ao reset do rádio), ignoramos
+      if (currentTime > lastSignalTime && inactivityDuration >= 3000) { 
+        sendSignal(3);
+        estadoTimeout = 2; 
+      }
     }
-    if (inactivityDuration >= 7000 && !signal4Sent) {
-      sendSignal(4);
-      signal4Sent = true;
-      waitingForTimeout = false;
+    // SINAL 4
+    else if (estadoTimeout == 2) {
+      if (currentTime > lastSignalTime && inactivityDuration >= 7000) {
+        sendSignal(4);
+        estadoTimeout = 0; 
+      }
     }
   }
-  delay(20);
+
+  delay(10); // Reduzi para 10ms para dar mais precisão ao loop
 }
