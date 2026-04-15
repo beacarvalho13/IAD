@@ -13,11 +13,8 @@ unsigned long pressStartTime = 0;
 void sendSignal(uint8_t s) {
   String mData = "";
   
-  // Adicionamos dois bytes: 
-  // 1. Um identificador (0xFF)
-  // 2. O teu sinal (s)
-  mData += (char)0xFF; 
-  mData += (char)s;    
+  mData += (char)0xFF;   //identifier
+  mData += (char)s;   //signal
 
   BLEAdvertisementData advData;
   advData.setName(DEVICE_NAME);
@@ -27,7 +24,7 @@ void sendSignal(uint8_t s) {
   pAdvertising->setAdvertisementData(advData);
   pAdvertising->start(); 
   
-  Serial.print("Beacon Signal Emitido: ");
+  Serial.print("Signal: ");
   Serial.println(s);
 }
 
@@ -48,50 +45,46 @@ void loop() {
   static unsigned long lastSignalTime = 0;
   static int estadoTimeout = 0; 
 
-  // 1. PRESSIONAR
+  //press the button
   if (value > threshold && !isPressing) {
     isPressing = true;
     pressStartTime = currentTime;
-    estadoTimeout = 0; 
+    estadoTimeout = 0;   //getting data
   }
 
-  // 2. SOLTAR
+  //release the button
   if (value <= threshold && isPressing) {
     isPressing = false;
     unsigned long duration = currentTime - pressStartTime;
     uint8_t signal = 0;
 
-    if (duration >= 50 && duration < 1000) signal = 1;
-    else if (duration >= 1000) signal = 2;
+    if (duration >= 50 && duration < 1000) signal = 1;   //dot
+    else if (duration >= 1000) signal = 2;   //dash
 
     if (signal > 0) {
       sendSignal(signal);
-      // Forçamos o lastSignalTime a ser o AGORA absoluto
       lastSignalTime = millis(); 
-      estadoTimeout = 1;         
+      estadoTimeout = 1;   //waiting for end of character
     }
   }
 
-  // 3. GESTÃO DE TIMEOUTS (Com proteção contra disparos fantasmas)
   if (!isPressing && estadoTimeout > 0) {
     unsigned long inactivityDuration = currentTime - lastSignalTime;
 
-    // SINAL 3
     if (estadoTimeout == 1) {
-      // Se a diferença for negativa ou louca (devido ao reset do rádio), ignoramos
       if (currentTime > lastSignalTime && inactivityDuration >= 3000) { 
-        sendSignal(3);
-        estadoTimeout = 2; 
+        sendSignal(3);   //end of character
+        estadoTimeout = 2;   //waiting for end of word
       }
     }
-    // SINAL 4
+    
     else if (estadoTimeout == 2) {
       if (currentTime > lastSignalTime && inactivityDuration >= 7000) {
-        sendSignal(4);
-        estadoTimeout = 0; 
+        sendSignal(4);   //end of word
+        estadoTimeout = 0;   //reading data
       }
     }
   }
 
-  delay(10); // Reduzi para 10ms para dar mais precisão ao loop
+  delay(10);
 }
