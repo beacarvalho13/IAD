@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../services/message_bus.dart';
+import '../services/tts_service.dart';
 
 
 class WordsReaderScreen extends StatefulWidget {
@@ -16,27 +17,36 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
   bool _isNewChar = false;
 
   @override
-    void initState() {
-      super.initState();
+  void initState() {
+    super.initState();
 
-      WordsDecoderService().clearMessage();
-      GlobalMorseService().clearMessage();     
+    TtsService().init(); // 👈 initialize once
 
-      // Listen to the final decoded message from the data source / Writer
-      MessageBus.messageStream.listen((newMessage) {
+    WordsDecoderService().clearMessage();
+    GlobalMorseService().clearMessage();
+
+    MessageBus.messageStream.listen((newMessage) {
       if (newMessage != receivedMessage) {
         setState(() {
           receivedMessage = newMessage;
           _isNewChar = true;
         });
 
-          // Flash highlight for new character
-          Future.delayed(const Duration(milliseconds: 200), () {
-            if (mounted) setState(() => _isNewChar = false);
-          });
+        // 🧠 Extract only the LAST word
+        final words = newMessage.trim().split(" ");
+        final lastWord = words.isNotEmpty ? words.last : "";
+
+        if (lastWord.isNotEmpty) {
+          TtsService().speak(lastWord); // 🔊 speak only new word
         }
-      });
-    }
+
+        // Flash highlight
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) setState(() => _isNewChar = false);
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
