@@ -4,8 +4,6 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 
 class BleDeviceDataSource implements DeviceDataSource {
-  int _ultimoSinalProcessado = -1;
-
   @override
   Stream<List<Device>> getDevices() {
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
@@ -14,7 +12,8 @@ class BleDeviceDataSource implements DeviceDataSource {
       return results.map((r) {
         return Device(
           id: r.device.remoteId.str,
-          name: r.device.platformName.isEmpty ? "Unknown" : r.device.platformName,
+          // Alterado para usar advName
+          name: r.advertisementData.advName.isEmpty ? "Unknown" : r.advertisementData.advName,
           rssi: r.rssi,
           nativeDevice: r.device,
         );
@@ -23,51 +22,51 @@ class BleDeviceDataSource implements DeviceDataSource {
   }
 
   @override
-Stream<int> getSensorValue(Device device, String sensor) async* {
-  await FlutterBluePlus.stopScan();
-  final controller = StreamController<int>();
-  int _ultimoIdLocal = -1;
+  Stream<int> getSensorValue(Device device, String sensor) async* {
+    await FlutterBluePlus.stopScan();
+    // Definido como broadcast para segurança
+    final controller = StreamController<int>.broadcast();
+    int _ultimoIdLocal = -1;
 
-  final subscription = FlutterBluePlus.onScanResults.listen((results) {
-    for (ScanResult r in results) {
-      // 1. Procuramos pelo nome que definiste no Arduino
-      if (r.advertisementData.advName == "TALKY_BUDDY!!!") {
-        
-        final mData = r.advertisementData.manufacturerData;
-        if (mData.isEmpty) continue;
+    final subscription = FlutterBluePlus.onScanResults.listen((results) {
+      for (ScanResult r in results) {
+        // Certifica-te que o nome é IGUAL ao do Arduino
+        if (r.advertisementData.advName == "TALKY_BUDDY!!!") {
+          final mData = r.advertisementData.manufacturerData;
+          if (mData.isEmpty) continue;
 
-        // Pegamos nos bytes de qualquer chave (Company ID) que o Arduino enviou
-        final bytes = mData.values.first;
+          final bytes = mData.values.first;
 
-        if (bytes.length >= 2) {
-          int idSeq = bytes[0]; 
-          int sinal = bytes[1];
+          if (bytes.length >= 2) {
+            int idSeq = bytes[0]; 
+            int sinal = bytes[1];
+            
+            print("ID: $idSeq | Sinal: $sinal");
 
-          if (idSeq != _ultimoIdLocal) {
-            _ultimoIdLocal = idSeq;
-            if (sinal >= 1 && sinal <= 4) {
-              print(">>> SINAL CAPTADO: $sinal (ID: $idSeq)");
-              controller.add(sinal);
+            if (idSeq != _ultimoIdLocal) {
+              _ultimoIdLocal = idSeq;
+              if (sinal >= 1 && sinal <= 4) {
+                print(">>> SINAL VALIDADO: $sinal");
+                controller.add(sinal);
+              }
             }
           }
         }
       }
+    });
+
+    await FlutterBluePlus.startScan(
+      androidUsesFineLocation: true,
+      androidScanMode: AndroidScanMode.lowLatency,
+      continuousUpdates: true, 
+    );
+
+    try {
+      yield* controller.stream;
+    } finally {
+      await subscription.cancel();
+      await controller.close();
+      await FlutterBluePlus.stopScan();
     }
-  });
-
-  // CONFIGURAÇÃO DE ALTA AGRESSIVIDADE PARA O SCAN
-  await FlutterBluePlus.startScan(
-    androidUsesFineLocation: true,
-    androidScanMode: AndroidScanMode.lowLatency, // Máxima velocidade
-    continuousUpdates: true, 
-  );
-
-  try {
-    yield* controller.stream;
-  } finally {
-    subscription.cancel();
-    controller.close();
-    await FlutterBluePlus.stopScan();
   }
-}
 }

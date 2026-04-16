@@ -8,8 +8,10 @@ class MessageBus {
   static String get lastMessage => _lastMessage;
 
   static void updateMessage(String message) {
-    _lastMessage = message;
-    _messageController.add(message);
+    if (!_messageController.isClosed) {
+      _lastMessage = message;
+      _messageController.add(message);
+    }
   }
 
   static final StreamController<String> _currentPathController = 
@@ -19,12 +21,21 @@ class MessageBus {
   static String get lastPath => _lastPath;
 
   static void updateCurrentPath(String path) {
-    _lastPath = path;
-    _currentPathController.add(path);
+    if (!_currentPathController.isClosed) {
+      _lastPath = path;
+      _currentPathController.add(path);
+    }
   }
 
   static void reset() {
-    updateMessage("");
-    updateCurrentPath("");
+    _lastMessage = "";
+    _lastPath = "";
+    if (!_messageController.isClosed) _messageController.add("");
+    if (!_currentPathController.isClosed) _currentPathController.add("");
+  }
+
+  static void dispose() {
+    _messageController.close();
+    _currentPathController.close();
   }
 }
