@@ -3,8 +3,6 @@ import '../models/device.dart';
 import '../data/device_data_source.dart';
 import 'message_bus.dart';
 
-
-
 class WordsDecoderService {
   static final WordsDecoderService _instance = WordsDecoderService._internal();
   factory WordsDecoderService() => _instance;
@@ -23,15 +21,14 @@ class WordsDecoderService {
 
   void clearMessage() {
     for (var decoder in _decoders.values) {
-      decoder.finalMessage = "";
-      decoder.currentPath = "";
+      decoder.reset();
     }
     MessageBus.updateMessage("");
     MessageBus.updateCurrentPath("");
   }
-  
+
   DeviceWordsDecoder? getDecoder(String deviceId) => _decoders[deviceId];
-  
+
   void dispose() {
     for (var decoder in _decoders.values) {
       decoder.dispose();
@@ -47,10 +44,12 @@ class DeviceWordsDecoder {
   String currentPath = "";
   String finalMessage = "";
 
-  static const int letterGapThreshold = 1000;
-  static const int wordGapThreshold = 2000;
+  static const int dot = 1;
+  static const int dash = 2;
+  static const int endOfChar = 3;
+  static const int endOfWord = 4;
 
-
+  /// Your custom "symbol → word" dictionary
   static const Map<String, String> wordMap = {
     ".": "YES",
     "..": "NO",
@@ -61,47 +60,74 @@ class DeviceWordsDecoder {
     "..-": "PLEASE",
     ".-": "THANK YOU",
     "...": "GOOD",
-    "---": "BAD"}
-  ;
+    "---": "BAD",
+  };
 
   late final StreamSubscription<int> _subscription;
 
-  DeviceWordsDecoder({required this.device, required this.dataSource}) {
+  DeviceWordsDecoder({
+    required this.device,
+    required this.dataSource,
+  }) {
     _subscription = dataSource
         .getSensorValue(device, "signal")
         .listen(_processInput);
   }
 
   void _processInput(int value) {
-    const dot = 1;
-    const dash = 2;
-    const endOfChar = 3;
-    const endOfWord = 4;
+    switch (value) {
+      case dot:
+        currentPath += '.';
+        MessageBus.updateCurrentPath(currentPath);
+        break;
 
-    if (value == dot || value == dash) {
-      // Build current letter
-      currentPath += (value == dot ? '.' : '-');
-      MessageBus.updateCurrentPath(currentPath);
-    } 
-    else if (value == endOfChar) {
-      _flushCharacter();
-    } 
-    else if (value == endOfWord) {
-      _flushCharacter();
-      if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
-        finalMessage += " "; // separate words
-        MessageBus.updateMessage(finalMessage);
-      }
+      case dash:
+        currentPath += '-';
+        MessageBus.updateCurrentPath(currentPath);
+        break;
+
+      case endOfChar:
+        _flushCharacter();
+        break;
+
+      case endOfWord:
+        _flushCharacter();
+        _addWordSeparator();
+        break;
+
+      default:
+        // Ignore unknown values
+        break;
     }
   }
 
   void _flushCharacter() {
     if (currentPath.isEmpty) return;
+
     final decoded = wordMap[currentPath] ?? "?";
+
+    // Add space if needed (avoid merging words accidentally)
+    if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
+      finalMessage += " ";
+    }
+
     finalMessage += decoded;
     currentPath = "";
+
     MessageBus.updateCurrentPath(currentPath);
     MessageBus.updateMessage(finalMessage);
+  }
+
+  void _addWordSeparator() {
+    if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
+      finalMessage += " ";
+      MessageBus.updateMessage(finalMessage);
+    }
+  }
+
+  void reset() {
+    currentPath = "";
+    finalMessage = "";
   }
 
   void dispose() {
