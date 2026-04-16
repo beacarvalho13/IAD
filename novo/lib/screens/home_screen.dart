@@ -77,8 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _updateDevices() {
     final Map<String, Device> all = {};
 
-    for (var d in _fakeDevices) all[d.id] = d;
-    for (var d in _bleDevices) all[d.id] = d;
+    for (var d in _fakeDevices) {
+      all[d.id] = d;
+    }
+    for (var d in _bleDevices) {
+      all[d.id] = d;
+    }
 
     setState(() {
       devices = all.values.toList();
