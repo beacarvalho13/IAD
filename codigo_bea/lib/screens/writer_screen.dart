@@ -16,12 +16,31 @@ class WriterScreen extends StatefulWidget {
 class _WriterScreenState extends State<WriterScreen> {
   DeviceMorseDecoder? decoder;
 
+  bool _isNewWord = false;
+  String _lastMessage = "";
+
   @override
   void initState() {
     super.initState();
     decoder = GlobalMorseService().getDecoder(widget.deviceId);
+
     GlobalMorseService().clearMessage();
     WordsDecoderService().clearMessage();
+
+    MessageBus.messageStream.listen((newMessage) {
+      if (newMessage != _lastMessage && newMessage.endsWith(" ")) {
+        setState(() {
+          _isNewWord = true;
+        });
+
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) setState(() => _isNewWord = false);
+        });
+      }
+
+      _lastMessage = newMessage;
+    });
+
   }
 
   @override
@@ -33,6 +52,7 @@ class _WriterScreenState extends State<WriterScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return StreamBuilder<String>(
       stream: MessageBus.messageStream,
@@ -41,6 +61,10 @@ class _WriterScreenState extends State<WriterScreen> {
         final currentMessage = snapshot.data ?? "";
 
         return Scaffold(
+          backgroundColor: _isNewWord
+            ? colors.primary.withOpacity(0.1)
+            : theme.scaffoldBackgroundColor,
+
           appBar: AppBar(
             title: const Text("Writer Mode"),
           ),
@@ -101,6 +125,9 @@ class _WriterScreenState extends State<WriterScreen> {
                           : currentMessage,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: _isNewWord
+                            ? colors.primary
+                            : colors.onSurface,
                       ),
                     ),
                   ],
