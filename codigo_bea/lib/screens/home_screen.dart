@@ -36,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Device> _bleDevices = [];
   List<Device> _fakeDevices = [];
 
+  void Function(VoidCallback fn)? _modalSetState;
+
   // -------------------- LÓGICA DE SCAN --------------------
   void startScan() {
     setState(() {
@@ -68,10 +70,19 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: _buildScanResults(),
-      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Save this setter so we can trigger rebuilds
+            _modalSetState = setModalState;
+
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: _buildScanResults(),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -84,6 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       devices = all.values.toList();
     });
+
+     if (_modalSetState != null) {
+      _modalSetState!(() {});
+    }
 
   }
 
