@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_blue_plus: 1.31.0
   flutter_tts: 4.2.5
+  rename: ^3.1.0
 
 dev_dependencies:
   flutter_native_splash: ^2.4.7
