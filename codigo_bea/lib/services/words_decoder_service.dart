@@ -68,7 +68,7 @@ class DeviceWordsDecoder {
 
   DeviceWordsDecoder({required this.device, required this.dataSource}) {
     _subscription = dataSource
-        .getSensorValue(device, "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+        .getSensorValue(device, "signal")
         .listen(_processInput);
   }
 
