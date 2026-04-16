@@ -1,13 +1,15 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
+// Text-to-speech service using the native flutter_tts package
+
 class TtsService {
   static final TtsService _instance = TtsService._internal();
   factory TtsService() => _instance;
   TtsService._internal();
 
-  final FlutterTts _tts = FlutterTts();
+  final FlutterTts _tts = FlutterTts();// Instance of the FlutterTts class to handle text-to-speech functionality
 
-  Future<void> init() async {
+  Future<void> init() async {// Convigures the TTS voice and settings, can be altered
     await _tts.setLanguage("en-US");
     await _tts.setSpeechRate(0.5);
     await _tts.setPitch(1.0);
@@ -33,7 +35,7 @@ class TtsService {
           );
     } catch (_) {
       selectedVoice = voices.first as Map?;
-    }
+    }// If no English voice is found, just use the first available voice (safeguard for devices without English voices)
 
     if (selectedVoice == null) return;
 
@@ -54,9 +56,9 @@ class TtsService {
 
     await _tts.stop();
     await _tts.speak(cleanText);
-  }
+  }// Speaks the given text
 
   Future<void> stop() async {
-    await _tts.stop();
+    await _tts.stop();// Stops any ongoing speech
   }
 }

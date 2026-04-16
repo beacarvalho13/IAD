@@ -3,14 +3,16 @@ import '../models/device.dart';
 import '../data/device_data_source.dart';
 import 'message_bus.dart';
 
+// Service to decode pre-defined words from sensor signals on the Talky Buddy
+
 class WordsDecoderService {
   static final WordsDecoderService _instance = WordsDecoderService._internal();
   factory WordsDecoderService() => _instance;
   WordsDecoderService._internal();
 
-  final Map<String, DeviceWordsDecoder> _decoders = {};
+  final Map<String, DeviceWordsDecoder> _decoders = {};// Map to hold decoders for each device by their ID
 
-  void initDecoder(Device device, DeviceDataSource dataSource) {
+  void initDecoder(Device device, DeviceDataSource dataSource) {// Initializes a decoder for the given device if it doesn't already exist
     if (!_decoders.containsKey(device.id)) {
       _decoders[device.id] = DeviceWordsDecoder(
         device: device,
@@ -24,7 +26,7 @@ class WordsDecoderService {
       decoder.reset();
     }
     MessageBus.updateMessage("");
-    MessageBus.updateCurrentPath("");
+    MessageBus.updateCurrentPath("");// Clears the current message and path for all decoders and updates the message bus
   }
 
   DeviceWordsDecoder? getDecoder(String deviceId) => _decoders[deviceId];
@@ -47,9 +49,8 @@ class DeviceWordsDecoder {
   static const int dot = 1;
   static const int dash = 2;
   static const int endOfChar = 3;
-  static const int endOfWord = 4;
+  static const int endOfWord = 4;// Expected commands from the Talky Buddy
 
-  /// Your custom "symbol → word" dictionary
   static const Map<String, String> wordMap = {
     ".": "YES",
     "..": "NO",
@@ -61,11 +62,11 @@ class DeviceWordsDecoder {
     ".-": "THANK YOU",
     "...": "GOOD",
     "---": "BAD",
-  };
+  };// Predefined word dictionary for the writer mode
 
   late final StreamSubscription<int> _subscription;
 
-  DeviceWordsDecoder({
+  DeviceWordsDecoder({// Constructor that initializes the decoder and subscribes to the sensor value stream for the device
     required this.device,
     required this.dataSource,
   }) {
@@ -74,23 +75,23 @@ class DeviceWordsDecoder {
         .listen(_processInput);
   }
 
-  void _processInput(int value) {
+  void _processInput(int value) {// Processes incoming signals and updates the current path and final message accordingly
     switch (value) {
-      case dot:
+      case dot:// Adds a dot to the current path and updates the message bus for live preview
         currentPath += '.';
         MessageBus.updateCurrentPath(currentPath);
         break;
 
-      case dash:
+      case dash:// Adds a dash to the current path and updates the message bus for live preview
         currentPath += '-';
         MessageBus.updateCurrentPath(currentPath);
         break;
 
-      case endOfChar:
+      case endOfChar:// Flushes the current character to the final message
         _flushCharacter();
         break;
 
-      case endOfWord:
+      case endOfWord:// Flushes the current character and adds a word separator
         _flushCharacter();
         _addWordSeparator();
         break;
@@ -112,13 +113,13 @@ class DeviceWordsDecoder {
     }
 
     finalMessage += decoded;
-    currentPath = "";
+    currentPath = "";// Clear current path after decoding a character
 
     MessageBus.updateCurrentPath(currentPath);
-    MessageBus.updateMessage(finalMessage);
+    MessageBus.updateMessage(finalMessage);// Update the final message in the message bus after decoding a character
   }
 
-  void _addWordSeparator() {
+  void _addWordSeparator() {// Adds a space to separate words if the final message is not empty and doesn't already end with a space
     if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
       finalMessage += " ";
       MessageBus.updateMessage(finalMessage);
@@ -128,7 +129,7 @@ class DeviceWordsDecoder {
   void reset() {
     currentPath = "";
     finalMessage = "";
-  }
+  }// Resets the current path and final message for the decoder, used when clearing messages
 
   void dispose() {
     _subscription.cancel();
