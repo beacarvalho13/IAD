@@ -30,18 +30,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Device? connectedDevice; // Saves the selected device to show its name and pass it to the next screens
 
   final DeviceDataSource fakedataSource = FakeDeviceDataSource();
-  final DeviceDataSource bleDataSource = BleDeviceDataSource();// Data sources for real BLE devices and fake devices for testing
+  final DeviceDataSource bleDataSource = BleDeviceDataSource(); // Data sources for real BLE devices and fake devices for testing
 
   StreamSubscription<List<Device>>? _bleSub;
   StreamSubscription<List<Device>>? _fakeSub;
 
   List<Device> _bleDevices = [];
-  List<Device> _fakeDevices = [];// Temporary lists to hold devices from each source before merging them
+  List<Device> _fakeDevices = []; // Temporary lists to hold devices from each source before merging them
 
   void Function(VoidCallback fn)? _modalSetState;
 
   // Scanning
-  void startScan() {// Starts scanning for devices, shows a loading indicator and opens a bottom sheet with the results
+  // Starts scanning for devices, shows a loading indicator and opens a bottom sheet with the results
+  void startScan() {
     setState(() {
       isScanning = true;
       _bleDevices = [];
@@ -50,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     _bleSub?.cancel();
-    _fakeSub?.cancel();// Cancel any previous subscriptions to avoid duplicates if the user scans multiple times
+    _fakeSub?.cancel(); // Cancel any previous subscriptions to avoid duplicates if the user scans multiple times
 
     _bleSub = bleDataSource.getDevices().listen((found) {
       _bleDevices = found;
@@ -66,7 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => isScanning = false);
     });
 
-    showModalBottomSheet(// Opens a bottom sheet to show the scanning results, allowing the user to select a device
+    // Opens a bottom sheet to show the scanning results, allowing the user to select a device
+    showModalBottomSheet( 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -88,7 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _updateDevices() {// Merges all devices from both sources (real and fake) into a single list
+  // Merges all devices from both sources (real and fake) into a single list
+  void _updateDevices() {
     final Map<String, Device> all = {};
 
     for (var d in _fakeDevices) { all[d.id] = d; }
@@ -99,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
      if (_modalSetState != null) {
-      _modalSetState!(() {});// Trigger a rebuild of the modal to show new devices as they are found
+      _modalSetState!(() {}); // Trigger a rebuild of the modal to show new devices as they are found
     }
 
   }
@@ -133,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
           nativeDevice: null,
         );
       }
-    }// Since the fake devices are just placeholders, we need to give them a known ID and name when selected
+    } // Since the fake devices are just placeholders, we need to give them a known ID and name when selected
 
      void switchMode(CommunicationMode mode) {
       // Stop everything cleanly first
@@ -150,7 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {});
     }
 
-  void openWriter(Device device) {// Opens the writer screen based on the selected mode, passing the selected device to it
+  // Opens the writer screen based on the selected mode, passing the selected device to it
+  void openWriter(Device device) { 
     final resolveDevice = _resolveFakeDevice(device);
     final dataSource = resolveDevice.nativeDevice == null ? fakedataSource : bleDataSource;
 
@@ -158,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalMorseService().dispose();
 
     MessageBus.updateMessage("");
-    MessageBus.updateCurrentPath("");// Clears any previous message state before opening the new screen
+    MessageBus.updateCurrentPath(""); // Clears any previous message state before opening the new screen
 
     if (appMode.value == CommunicationMode.morse) {
       GlobalMorseService().initDecoder(resolveDevice, dataSource);
@@ -183,8 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-  void openReader(Device device) {// Opens the reader screen based on the selected mode, passing the selected device to it
+  // Opens the reader screen based on the selected mode, passing the selected device to it
+  void openReader(Device device) {
     final resolveDevice = _resolveFakeDevice(device);
     final dataSource = resolveDevice.nativeDevice == null ? fakedataSource : bleDataSource;
 
@@ -192,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalMorseService().dispose();
 
     MessageBus.updateMessage("");
-    MessageBus.updateCurrentPath("");// Clears any previous message state before opening the new screen
+    MessageBus.updateCurrentPath(""); // Clears any previous message state before opening the new screen
     
     if (appMode.value == CommunicationMode.morse) {
       GlobalMorseService().initDecoder(resolveDevice, dataSource);
@@ -225,14 +229,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // UI components
-  Widget _buildScanResults() {// Building of the main UI
+  Widget _buildScanResults() { // Building of the main UI
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          const Text("Searching for Devices", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),// Header of the scanning box
+          const Text("Searching for Devices", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // Header of the scanning box
           const SizedBox(height: 10),
-          if (isScanning) const LinearProgressIndicator(),// Shows a loading indicator while scanning
+          if (isScanning) const LinearProgressIndicator(), // Shows a loading indicator while scanning
           const SizedBox(height: 10),
           Expanded(
             child: devices.isEmpty
@@ -258,7 +262,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Scaffold(// Main layout of the home screen, showing connection status, mode selection and navigation to writer/reader screens
+    // Main layout of the home screen, showing connection status, mode selection and navigation to writer/reader screens
+    return Scaffold(
       appBar: AppBar(
         title: Text("Talky Buddy", style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.bold)),
       ),
@@ -297,12 +302,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 30),
 
-            Center(// Toggle buttons to switch between Morse and Words mode, updating the global app accordingly
+            // Toggle buttons to switch between Morse and Words mode, updating the global app accordingly
+            Center(
               child: ToggleButtons(
                 borderRadius: BorderRadius.circular(12),
                 isSelected: [
                   appMode.value == CommunicationMode.morse,
-                  appMode.value == CommunicationMode.words,// The toggle state is determined by the global app mode
+                  appMode.value == CommunicationMode.words, // The toggle state is determined by the global app mode
                 ],
                 onPressed: (index) {
                   switchMode(
@@ -311,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : CommunicationMode.words,
                   );
                 },
-                children: const [// Communication mode list, only appears when a device is connected
+                children: const [ // Communication mode list, only appears when a device is connected
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Text("Morse"),

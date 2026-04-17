@@ -24,7 +24,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
     TtsService().init(); // Initialize TTS service
 
     WordsDecoderService().clearMessage();
-    GlobalMorseService().clearMessage();// Clear any previous message on start
+    GlobalMorseService().clearMessage(); // Clear any previous message on start
 
     MessageBus.messageStream.listen((newMessage) {
       if (newMessage != receivedMessage) {
@@ -59,7 +59,8 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Scaffold(// Visual layout for the reader screen, showing the received word and a button to clear it
+    // Visual layout for the reader screen, showing the received word and a button to clear it
+    return Scaffold(
       backgroundColor: _isNewChar ? colors.primary.withOpacity(0.1) : theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Morse Reader")),
       body: Center(
@@ -87,7 +88,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: () {// Clear button to reset the received message
+      onPressed: () { // Clear button to reset the received message
         WordsDecoderService().clearMessage(); // Clear global finalMessage
         setState(() => receivedMessage = "");
       },

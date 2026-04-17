@@ -11,14 +11,14 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});// Main widget of the app, which listens to the communication mode and updates the theme accordingly
+  const MyApp({super.key}); // Main widget of the app, which listens to the communication mode and updates the theme accordingly
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<CommunicationMode>(
       valueListenable: appMode,
       builder: (context, mode, _) {
-        final isMorse = mode == CommunicationMode.morse;// Determines if the current mode is Morse or Words to set the theme color
+        final isMorse = mode == CommunicationMode.morse; // Determines if the current mode is Morse or Words to set the theme color
 
         return MaterialApp(
           title: 'BLE Sensor App',// Title of the app

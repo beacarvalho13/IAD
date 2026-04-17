@@ -15,11 +15,12 @@ class WriterScreen extends StatefulWidget {
   State<WriterScreen> createState() => _WriterScreenState();
 }
 
-class _WriterScreenState extends State<WriterScreen> {// State for the writer screen, managing the Morse decoder and UI updates
+// State for the writer screen, managing the Morse decoder and UI updates
+class _WriterScreenState extends State<WriterScreen> {
   DeviceMorseDecoder? decoder;
 
   bool _isNewWord = false;
-  String _lastMessage = "";// State variables to manage new word highlighting and track the last message for comparison
+  String _lastMessage = ""; // State variables to manage new word highlighting and track the last message for comparison
 
   @override
   void initState() {
@@ -27,7 +28,7 @@ class _WriterScreenState extends State<WriterScreen> {// State for the writer sc
     decoder = GlobalMorseService().getDecoder(widget.deviceId);
 
     GlobalMorseService().clearMessage();
-    WordsDecoderService().clearMessage();// Clear any previous message on start
+    WordsDecoderService().clearMessage(); // Clear any previous message on start
 
     MessageBus.messageStream.listen((newMessage) {
       if (newMessage != _lastMessage && newMessage.endsWith(" ")) {
@@ -45,9 +46,10 @@ class _WriterScreenState extends State<WriterScreen> {// State for the writer sc
 
   }
 
+  // Dispose the Morse decoder for this device when the screen is disposed to free resources
   @override
   void dispose() {
-    super.dispose();// Dispose the Morse decoder for this device when the screen is disposed to free resources
+    super.dispose();
   }
 
   @override
@@ -55,7 +57,8 @@ class _WriterScreenState extends State<WriterScreen> {// State for the writer sc
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return StreamBuilder<String>(// Listen to the message stream to update the UI with the current message and path
+    // Listen to the message stream to update the UI with the current message and path
+    return StreamBuilder<String>(
       stream: MessageBus.messageStream,
       initialData: MessageBus.lastMessage,
       builder: (context, snapshot) {
@@ -67,7 +70,7 @@ class _WriterScreenState extends State<WriterScreen> {// State for the writer sc
             : theme.scaffoldBackgroundColor,
 
           appBar: AppBar(
-            title: const Text("Writer Mode"),// App bar with title
+            title: const Text("Writer Mode"), // App bar with title
           ),
           body: Column(
             children: [
@@ -79,7 +82,8 @@ class _WriterScreenState extends State<WriterScreen> {// State for the writer sc
                   builder: (context, snapshot) {
                     final currentPath = snapshot.data ?? "";
 
-                    return InteractiveViewer(// Dynamic Morse tree definition and visual settings
+                    // Dynamic Morse tree definition and visual settings
+                    return InteractiveViewer(
                       boundaryMargin: const EdgeInsets.all(500),
                       minScale: 1.0,
                       maxScale: 1.0,
@@ -189,7 +193,8 @@ class MorseTreePainter extends CustomPainter {
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
     }
     
-    if (level < 4) {// Draw branches and child nodes recursively
+    // Draw branches and child nodes recursively
+    if (level < 4) {
       double nextspacing = spacing * 0.4;
       double direction = (path.startsWith('.')) ? -1 : 1; // Up for dot, down for dash
       if (level == 0) {
@@ -263,7 +268,7 @@ class MorseTreePainter extends CustomPainter {
     canvas.drawLine(start, end, p);
 
     
-    final textPainter = TextPainter(// Label for the branch (dot or dash)
+    final textPainter = TextPainter( // Label for the branch (dot or dash)
         text: TextSpan(
           text: targetPath.endsWith('.') ? '.' : '—',
           style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
@@ -274,14 +279,15 @@ class MorseTreePainter extends CustomPainter {
       final labelOffsetY = 5;
 
       textPainter.layout();
-      textPainter.paint(// Position the label at the midpoint of the branch, with a slight vertical offset
+      textPainter.paint( // Position the label at the midpoint of the branch, with a slight vertical offset
         canvas,
         Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
       );
 
     }
 
+  // Repaint only when the current path changes to optimize performance
   @override
   bool shouldRepaint(MorseTreePainter oldDelegate) =>
-      oldDelegate.currentPath != currentPath;// Repaint only when the current path changes to optimize performance
+      oldDelegate.currentPath != currentPath;
 }

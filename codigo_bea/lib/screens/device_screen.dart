@@ -4,7 +4,8 @@ import '../data/device_data_source.dart';
 
 // Screen that connects to a BLE device and displays a live-updating connection value from it
 
-class DeviceScreen extends StatelessWidget {// Receives the selected device and data source to fetch sensor values
+// Receives the selected device and data source to fetch sensor values
+class DeviceScreen extends StatelessWidget {
   final Device device;
   final DeviceDataSource dataSource;
 

@@ -28,18 +28,18 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
     ".-": "THANK YOU",
     "...": "GOOD",
     "---": "BAD"
-  };// Predefined word dictionary for the writer mode
+  }; // Predefined word dictionary for the writer mode
 
   @override
   void initState() {
     super.initState();
     
-    WordsDecoderService().clearMessage(); // Clear any previous message on start~
+    WordsDecoderService().clearMessage(); // Clear any previous message on start
     GlobalMorseService().clearMessage(); // Clear Morse decoder as well since they share the same input
   }
 
   @override
-  void dispose() {// Dispose the Words decoder for this device when the screen is disposed to free resources
+  void dispose() { // Dispose the Words decoder for this device when the screen is disposed to free resources
     WordsDecoderService().getDecoder(widget.deviceId)?.dispose();
     super.dispose();
   }
@@ -54,7 +54,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
           builder: (context, snapshot) {
             final currentMessage = snapshot.data ?? "";
 
-    return Scaffold(// Visual layout for the words writer screen
+    return Scaffold( // Visual layout for the words writer screen
       appBar: AppBar(
         title: const Text("Writer Mode"),
       ),
@@ -77,7 +77,8 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
 
                     final isActive = currentPath == morse;
                     
-                    return AnimatedContainer(// Highlight the active word based on the recieved code from the Talky Buddy
+                    // Highlight the active word based on the received code from the Talky Buddy
+                    return AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOut,
                       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -165,7 +166,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
             },
             child: const Icon(
               Icons.delete_outline,
-              size: 20, // <-- smaller size
+              size: 20, 
             ),
           ),
         );

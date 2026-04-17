@@ -19,15 +19,16 @@ class GlobalMorseService {
         dataSource: dataSource,
       );
     }
-  }// Initializes a decoder for the given device if it doesn't already exist
+  } // Initializes a decoder for the given device if it doesn't already exist
 
-  void clearMessage() {// Clears the current message and path for all decoders and updates the message bus
+  // Clears the current message and path for all decoders and updates the message bus
+  void clearMessage() {
     for (var decoder in _decoders.values) {
       decoder.finalMessage = "";
       decoder.currentPath = "";
     }
     MessageBus.updateMessage("");
-    MessageBus.updateCurrentPath("");// Clears the current message and path for all decoders and updates the message bus
+    MessageBus.updateCurrentPath(""); // Clears the current message and path for all decoders and updates the message bus
   }
 
   DeviceMorseDecoder? getDecoder(String deviceId) => _decoders[deviceId];
@@ -45,7 +46,7 @@ class DeviceMorseDecoder {
   final DeviceDataSource dataSource;
 
   String currentPath = "";
-  String finalMessage = "";// Internal state for building the current letter and word
+  String finalMessage = ""; // Internal state for building the current letter and word
 
   final Map<String, String> morseMap = {
     '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E',
@@ -54,7 +55,7 @@ class DeviceMorseDecoder {
     '.--.': 'P', '--.-': 'Q', '.-.': 'R', '...': 'S', '-': 'T',
     '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X', '-.--': 'Y',
     '--..': 'Z',
-  };// Morse code mapping for letters A-Z
+  }; // Morse code mapping for letters A-Z
 
   StreamSubscription<int>? _subscription;
 
@@ -68,16 +69,16 @@ class DeviceMorseDecoder {
     const dot = 1;
     const dash = 2;
     const endOfChar = 3;
-    const endOfWord = 4;// Signals expected from the Talky Buddy
+    const endOfWord = 4; // Signals expected from the Talky Buddy
 
-    if (value == dot || value == dash) {// Append dot or dash to the current path and update the message bus
+    if (value == dot || value == dash) { // Append dot or dash to the current path and update the message bus
       currentPath += (value == dot ? '.' : '-');
       MessageBus.updateCurrentPath(currentPath);
     } 
-    else if (value == endOfChar) {// End of character signal, decode current path and update message
+    else if (value == endOfChar) { // End of character signal, decode current path and update message
       _flushCharacter();
     } 
-    else if (value == endOfWord) {// End of word signal, flush character and add space
+    else if (value == endOfWord) { // End of word signal, flush character and add space
       _flushCharacter();
       if (finalMessage.isNotEmpty && !finalMessage.endsWith(" ")) {
         finalMessage += " ";
@@ -86,7 +87,8 @@ class DeviceMorseDecoder {
     }
   }
 
-  void _flushCharacter() {// Helper method to decode the current character and update the message bus
+  // Helper method to decode the current character and update the message bus
+  void _flushCharacter() {
     if (currentPath.isEmpty) return;
     final decoded = morseMap[currentPath] ?? "?";
     finalMessage += decoded;

@@ -15,7 +15,7 @@ class SensorTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {// Visual layout
+  Widget build(BuildContext context) { // Visual layout
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(

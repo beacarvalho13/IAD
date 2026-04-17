@@ -41,7 +41,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   void dispose() {
-    super.dispose();// Dispose resources if needed
+    super.dispose(); // Dispose resources if needed
   }
 
   @override
@@ -49,7 +49,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Scaffold(// Visual layout for the reader screen, showing the received message and a button to clear it
+    // Visual layout for the reader screen, showing the received message and a button to clear it
+    return Scaffold(
       backgroundColor: _isNewChar ? colors.primary.withOpacity(0.1) : theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Morse Reader")),
       body: Center(
@@ -77,7 +78,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: () {// Clear button to reset the received message
+      onPressed: () { // Clear button to reset the received message
         GlobalMorseService().clearMessage(); // Clear global finalMessage
         setState(() => receivedMessage = "");
       },

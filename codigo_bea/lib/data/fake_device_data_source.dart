@@ -11,7 +11,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
     yield [
       Device(name: "Fake Sensor A", id: "FAKE_01", rssi: -40, nativeDevice: null),
       Device(name: "Fake Sensor B", id: "FAKE_02", rssi: -60, nativeDevice: null),
-    ];// Definition of two fake devices
+    ]; // Definition of two fake devices
   }
 
   @override
@@ -52,7 +52,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
       'Q': [dashSignal, dashSignal, dotSignal, dashSignal],
       'R': [dotSignal, dashSignal, dotSignal],
       'V': [dotSignal, dotSignal, dotSignal, dashSignal],
-    };// Morse code mapping
+    }; // Morse code mapping
 
     final possibleMessages = ["HELLO", "SOS", "TEST", "ABC"];// Test words to simulate
 
@@ -68,7 +68,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
     const int symbolTime = 400; // Duration of dot/dash
     const int gapTime = 200;    // Short pause between symbols, letters, or words
 
-    while (true) {// Infinite loop to continuously emit signals based on the predefined message for each device
+    while (true) { // Infinite loop to continuously emit signals based on the predefined message for each device
       final words = message.split(' ');
       for (int w = 0; w < words.length; w++) {
         final word = words[w];

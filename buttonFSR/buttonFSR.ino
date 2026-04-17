@@ -2,6 +2,8 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
+// Main code for the button FSR project, which reads a button state and sends BLE signals based on the duration of the press
+
 #define DEVICE_NAME "TALKY_BUDDY!!!"
 
 BLEAdvertising *pAdvertising;
@@ -12,18 +14,19 @@ int threshold = 1000;
 bool isPressing = false;
 unsigned long pressStartTime = 0;
 
-uint8_t globalCounter = 0; // Coloca isto no topo do código
+uint8_t globalCounter = 0; 
 
 static unsigned long lastSignalTime = 0;
 static int estadoTimeout = 0; 
 
+// Function to broadcast BLE signal with a specific value
 void sendSignal(uint8_t s) {
-  globalCounter++; // ISTO É VITAL: Muda o ID a cada envio
+  globalCounter++; 
   if (globalCounter > 250) globalCounter = 1;
 
   uint8_t msd[4]; 
-  msd[0] = 0xFF; // Company ID Byte 1
-  msd[1] = 0xFF; // Company ID Byte 2
+  msd[0] = 0xFF; 
+  msd[1] = 0xFF; 
   msd[2] = globalCounter; 
   msd[3] = s;
 
@@ -54,20 +57,19 @@ void setup() {
   sendSignal(0);
 }
 
+// Loop to read button state and determine signal type based on press duration
 void loop() {
   int value = digitalRead(buttonPin);
-  unsigned long currentTime = millis();
-  //Serial.print("Value: ");
-  //Serial.println(value);
+  unsigned long currentTime = millis(); 
 
-  //press the button
+  // Press the button
   if (value == 0 && !isPressing) {
     isPressing = true;
     pressStartTime = currentTime;
     estadoTimeout = 0;   //getting data
   }
 
-  //release the button
+  // Release the button
   if (value == 1 && isPressing) {
     isPressing = false;
     unsigned long duration = currentTime - pressStartTime;
@@ -80,7 +82,7 @@ void loop() {
       sendSignal(signal);
       delay(100);
       lastSignalTime = millis(); 
-      estadoTimeout = 1;   //waiting for end of character
+      estadoTimeout = 1; // Waiting for end of character
     }
   }
 
@@ -89,15 +91,15 @@ void loop() {
 
     if (estadoTimeout == 1) {
       if (currentTime > lastSignalTime && inactivityDuration >= 3000) { 
-        sendSignal(3);   //end of character
-        estadoTimeout = 2;   //waiting for end of word
+        sendSignal(3); // End of character
+        estadoTimeout = 2; // Waiting for end of word
       }
     }
     
     else if (estadoTimeout == 2) {
       if (currentTime > lastSignalTime && inactivityDuration >= 7000) {
-        sendSignal(4);   //end of word
-        estadoTimeout = 0;   //reading data
+        sendSignal(4); // End of word
+        estadoTimeout = 0; // Reading data
       }
     }
   }
