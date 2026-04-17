@@ -4,6 +4,7 @@ import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../services/message_bus.dart';
 import '../services/tts_service.dart';
 
+// Main screen for the reader mode of the words communication, shows the selected word and reads it aloud using TTS
 
 class WordsReaderScreen extends StatefulWidget {
   const WordsReaderScreen({super.key});
@@ -20,10 +21,10 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
   void initState() {
     super.initState();
 
-    TtsService().init(); // 👈 initialize once
+    TtsService().init(); // Initialize TTS service
 
     WordsDecoderService().clearMessage();
-    GlobalMorseService().clearMessage();
+    GlobalMorseService().clearMessage();// Clear any previous message on start
 
     MessageBus.messageStream.listen((newMessage) {
       if (newMessage != receivedMessage) {
@@ -32,12 +33,12 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
           _isNewChar = true;
         });
 
-        // 🧠 Extract only the LAST word
+        // Extract the last word from the received message to speak it
         final words = newMessage.trim().split(" ");
         final lastWord = words.isNotEmpty ? words.last : "";
 
         if (lastWord.isNotEmpty) {
-          TtsService().speak(lastWord); // 🔊 speak only new word
+          TtsService().speak(lastWord); // Speak the last received word using TTS
         }
 
         // Flash highlight
@@ -50,7 +51,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
 
   @override
   void dispose() {
-    super.dispose();
+    super.dispose();// Dispose resources if needed
   }
   
   @override
@@ -58,7 +59,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Scaffold(
+    return Scaffold(// Visual layout for the reader screen, showing the received word and a button to clear it
       backgroundColor: _isNewChar ? colors.primary.withOpacity(0.1) : theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Morse Reader")),
       body: Center(
@@ -86,7 +87,7 @@ class _WordsReaderScreenState extends State<WordsReaderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: () {
+      onPressed: () {// Clear button to reset the received message
         WordsDecoderService().clearMessage(); // Clear global finalMessage
         setState(() => receivedMessage = "");
       },

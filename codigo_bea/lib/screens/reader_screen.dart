@@ -3,6 +3,7 @@ import 'package:meu_projeto/services/morse_decoder_service.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../services/message_bus.dart';
 
+// Main screen for the reader mode of the Morse code communication, shows the received message and highlights new characters
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
@@ -20,9 +21,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
       super.initState();
 
       WordsDecoderService().clearMessage(); 
-      GlobalMorseService().clearMessage();    
+      GlobalMorseService().clearMessage();// Clear any previous message on start   
 
-      // Listen to the final decoded message from the data source / Writer
+      // Listen to the final decoded message from the data source
       MessageBus.messageStream.listen((newMessage) {
       if (newMessage != receivedMessage) {
         setState(() {
@@ -40,7 +41,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   void dispose() {
-    super.dispose();
+    super.dispose();// Dispose resources if needed
   }
 
   @override
@@ -48,7 +49,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Scaffold(
+    return Scaffold(// Visual layout for the reader screen, showing the received message and a button to clear it
       backgroundColor: _isNewChar ? colors.primary.withOpacity(0.1) : theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Morse Reader")),
       body: Center(
@@ -76,7 +77,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: () {
+      onPressed: () {// Clear button to reset the received message
         GlobalMorseService().clearMessage(); // Clear global finalMessage
         setState(() => receivedMessage = "");
       },

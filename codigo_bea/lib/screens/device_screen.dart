@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../data/device_data_source.dart';
 
-class DeviceScreen extends StatelessWidget {
+// Screen that connects to a BLE device and displays a live-updating connection value from it
+
+class DeviceScreen extends StatelessWidget {// Receives the selected device and data source to fetch sensor values
   final Device device;
   final DeviceDataSource dataSource;
 
   const DeviceScreen({super.key, required this.device, required this.dataSource});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {// Visual layout
     return Scaffold(
       appBar: AppBar(title: Text(device.name)),
       body: Center(
