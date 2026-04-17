@@ -41,6 +41,8 @@ class BleDeviceDataSource implements DeviceDataSource {
             int idSeq = bytes[0]; 
             int sinal = bytes[1];
             
+            // Debug print to check the received ID and signal values on the connected terminal, not the screen
+
             print("ID: $idSeq | Sinal: $sinal");
 
             if (idSeq != _ultimoIdLocal) {
@@ -57,8 +59,8 @@ class BleDeviceDataSource implements DeviceDataSource {
 
     await FlutterBluePlus.startScan(
       androidUsesFineLocation: true,
-      androidScanMode: AndroidScanMode.lowLatency,
-      continuousUpdates: true, 
+      androidScanMode: AndroidScanMode.lowLatency,   // Fastest version of scanning
+      continuousUpdates: true,   // Continous scanning
     );
 
     try {

@@ -6,7 +6,7 @@
 
 BLEAdvertising *pAdvertising;
 const int fsrPin = A2;
-int threshold = 1000;
+int threshold = 50;
 bool isPressing = false;
 unsigned long pressStartTime = 0;
 uint8_t globalCounter = 0; // Coloca isto no topo do código
@@ -49,6 +49,8 @@ void setup() {
 
 void loop() {
   int value = analogRead(fsrPin);
+  Serial.print("Value: ");
+  Serial.println(value);
   unsigned long currentTime = millis();
   
   static unsigned long lastSignalTime = 0;

@@ -1,4 +1,4 @@
-#define BUTTON_PIN 2
+#define BUTTON_PIN 4
 
 void setup() {
   Serial.begin(115200);

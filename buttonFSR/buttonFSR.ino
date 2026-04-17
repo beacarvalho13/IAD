@@ -6,7 +6,7 @@
 
 BLEAdvertising *pAdvertising;
 
-const int buttonPin = 2;
+const int buttonPin = 4;
 int threshold = 1000;
 
 bool isPressing = false;
@@ -55,18 +55,20 @@ void setup() {
 }
 
 void loop() {
-  int value = analogRead(fsrPin);
+  int value = digitalRead(buttonPin);
   unsigned long currentTime = millis();
+  //Serial.print("Value: ");
+  //Serial.println(value);
 
   //press the button
-  if (value == LOW && !isPressing) {
+  if (value == 0 && !isPressing) {
     isPressing = true;
     pressStartTime = currentTime;
     estadoTimeout = 0;   //getting data
   }
 
   //release the button
-  if (value == HIGH && isPressing) {
+  if (value == 1 && isPressing) {
     isPressing = false;
     unsigned long duration = currentTime - pressStartTime;
     uint8_t signal = 0;

@@ -6,8 +6,8 @@ import 'package:meu_projeto/services/morse_decoder_service.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart';
 import '../models/device.dart';
 import '../widgets/device_card.dart';
-import 'writer_screen.dart'; // Importa o novo ecrã
-import 'reader_screen.dart'; // Importa o novo ecrã
+import 'writer_screen.dart'; 
+import 'reader_screen.dart'; 
 import '../data/fake_device_data_source.dart';
 import '../data/ble_device_data_source.dart';
 import '../data/device_data_source.dart';
