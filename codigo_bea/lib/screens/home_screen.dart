@@ -14,7 +14,7 @@ import '../data/device_data_source.dart';
 import 'words_writer_screen.dart';
 import 'words_reader_screen.dart';
 
-// Main home screen of the app, allowing users to scan for devices, select communication mode (Morse or Words) and navigate to writer/reader screens based on the selected device and mode
+// Home screen of the app, allowing users to scan for devices, select communication mode (Morse or Words) and navigate to writer/reader screens based on the selected device and mode
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

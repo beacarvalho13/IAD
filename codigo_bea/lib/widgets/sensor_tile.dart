@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// Widget that represents a card for a sensor value, showing an icon, title and the value
+
 class SensorTile extends StatelessWidget {
   final String title;
   final String value;
@@ -13,7 +15,7 @@ class SensorTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {// Visual layout
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
