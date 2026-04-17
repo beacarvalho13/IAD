@@ -3,16 +3,17 @@ import 'device_data_source.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 
+// Implementation of the DeviceDataSource using FlutterBluePlus to scan for BLE devices and read sensor values from the Talky Buddy
+
 class BleDeviceDataSource implements DeviceDataSource {
   @override
   Stream<List<Device>> getDevices() {
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
     
-    return FlutterBluePlus.scanResults.map((results) {
+    return FlutterBluePlus.scanResults.map((results) {// Map the scan results to a list of devices
       return results.map((r) {
         return Device(
           id: r.device.remoteId.str,
-          // Alterado para usar advName
           name: r.advertisementData.advName.isEmpty ? "Unknown" : r.advertisementData.advName,
           rssi: r.rssi,
           nativeDevice: r.device,
@@ -24,13 +25,12 @@ class BleDeviceDataSource implements DeviceDataSource {
   @override
   Stream<int> getSensorValue(Device device, String sensor) async* {
     await FlutterBluePlus.stopScan();
-    // Definido como broadcast para segurança
+    // Start scanning for BLE devices
     final controller = StreamController<int>.broadcast();
     int _ultimoIdLocal = -1;
 
     final subscription = FlutterBluePlus.onScanResults.listen((results) {
-      for (ScanResult r in results) {
-        // Certifica-te que o nome é IGUAL ao do Arduino
+      for (ScanResult r in results) {// Listen to scan results and filter for the Talky Buddy device
         if (r.advertisementData.advName == "TALKY_BUDDY!!!") {
           final mData = r.advertisementData.manufacturerData;
           if (mData.isEmpty) continue;

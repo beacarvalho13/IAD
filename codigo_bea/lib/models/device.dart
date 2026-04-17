@@ -1,5 +1,7 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+// Model class representing a BLE device, containing its name, ID and RSSI
+
 class Device {
   final String name;
   final String id;

@@ -2,6 +2,8 @@ import 'dart:async';
 import '../models/device.dart';
 import 'device_data_source.dart';
 
+// Fake implementation of the DeviceDataSource, providing simulated BLE devices and sensor values for debugging
+
 class FakeDeviceDataSource implements DeviceDataSource {
   @override
   Stream<List<Device>> getDevices() async* {
@@ -9,7 +11,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
     yield [
       Device(name: "Fake Sensor A", id: "FAKE_01", rssi: -40, nativeDevice: null),
       Device(name: "Fake Sensor B", id: "FAKE_02", rssi: -60, nativeDevice: null),
-    ];
+    ];// Definition of two fake devices
   }
 
   @override
@@ -21,7 +23,7 @@ class FakeDeviceDataSource implements DeviceDataSource {
     const int dotSignal = 1;
     const int dashSignal = 2;
     const int endOfChar = 3;
-    const int endOfWord = 4;
+    const int endOfWord = 4; // Constants representing different signal types and delimiters used in both communication modes
 
     final morseMap = {
       'H': [dotSignal, dotSignal, dotSignal, dotSignal],
@@ -50,9 +52,9 @@ class FakeDeviceDataSource implements DeviceDataSource {
       'Q': [dashSignal, dashSignal, dotSignal, dashSignal],
       'R': [dotSignal, dashSignal, dotSignal],
       'V': [dotSignal, dotSignal, dotSignal, dashSignal],
-    };
+    };// Morse code mapping
 
-    final possibleMessages = ["HELLO", "SOS", "TEST", "ABC"];
+    final possibleMessages = ["HELLO", "SOS", "TEST", "ABC"];// Test words to simulate
 
     final String message;
       if (deviceId == "FAKE_01") {
@@ -63,10 +65,10 @@ class FakeDeviceDataSource implements DeviceDataSource {
         message = "HELLO";
       }
       
-    const int symbolTime = 400; // duration of dot/dash
-    const int gapTime = 200;    // short pause between symbols, letters, or words
+    const int symbolTime = 400; // Duration of dot/dash
+    const int gapTime = 200;    // Short pause between symbols, letters, or words
 
-    while (true) {
+    while (true) {// Infinite loop to continuously emit signals based on the predefined message for each device
       final words = message.split(' ');
       for (int w = 0; w < words.length; w++) {
         final word = words[w];
