@@ -4,6 +4,8 @@ import 'package:meu_projeto/services/message_bus.dart';
 import 'package:meu_projeto/services/words_decoder_service.dart' hide DeviceMorseDecoder;
 import '../services/morse_decoder_service.dart';
 
+// Main screen for Morse code writing, showing the Morse tree and current message, highlighting the current path
+
 class WriterScreen extends StatefulWidget {
   final String deviceId;
 
@@ -13,11 +15,11 @@ class WriterScreen extends StatefulWidget {
   State<WriterScreen> createState() => _WriterScreenState();
 }
 
-class _WriterScreenState extends State<WriterScreen> {
+class _WriterScreenState extends State<WriterScreen> {// State for the writer screen, managing the Morse decoder and UI updates
   DeviceMorseDecoder? decoder;
 
   bool _isNewWord = false;
-  String _lastMessage = "";
+  String _lastMessage = "";// State variables to manage new word highlighting and track the last message for comparison
 
   @override
   void initState() {
@@ -25,7 +27,7 @@ class _WriterScreenState extends State<WriterScreen> {
     decoder = GlobalMorseService().getDecoder(widget.deviceId);
 
     GlobalMorseService().clearMessage();
-    WordsDecoderService().clearMessage();
+    WordsDecoderService().clearMessage();// Clear any previous message on start
 
     MessageBus.messageStream.listen((newMessage) {
       if (newMessage != _lastMessage && newMessage.endsWith(" ")) {
@@ -45,8 +47,7 @@ class _WriterScreenState extends State<WriterScreen> {
 
   @override
   void dispose() {
-    // Removida a chamada de dispose do decoder aqui para evitar que o stream feche ao navegar
-    super.dispose();
+    super.dispose();// Dispose the Morse decoder for this device when the screen is disposed to free resources
   }
 
   @override
@@ -54,7 +55,7 @@ class _WriterScreenState extends State<WriterScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return StreamBuilder<String>(
+    return StreamBuilder<String>(// Listen to the message stream to update the UI with the current message and path
       stream: MessageBus.messageStream,
       initialData: MessageBus.lastMessage,
       builder: (context, snapshot) {
@@ -66,7 +67,7 @@ class _WriterScreenState extends State<WriterScreen> {
             : theme.scaffoldBackgroundColor,
 
           appBar: AppBar(
-            title: const Text("Writer Mode"),
+            title: const Text("Writer Mode"),// App bar with title
           ),
           body: Column(
             children: [
@@ -78,7 +79,7 @@ class _WriterScreenState extends State<WriterScreen> {
                   builder: (context, snapshot) {
                     final currentPath = snapshot.data ?? "";
 
-                    return InteractiveViewer(
+                    return InteractiveViewer(// Dynamic Morse tree definition and visual settings
                       boundaryMargin: const EdgeInsets.all(500),
                       minScale: 1.0,
                       maxScale: 1.0,
@@ -149,7 +150,7 @@ class _WriterScreenState extends State<WriterScreen> {
     );
   }
 }
-// Morse Tree Painter (unchanged)
+// Morse Tree Painter
 class MorseTreePainter extends CustomPainter {
   final String currentPath;
   final Map<String, String> morseMap;
@@ -175,7 +176,7 @@ class MorseTreePainter extends CustomPainter {
     canvas.drawCircle(Offset(x, y), 14,
         Paint()..color = isActive ? colors.primary : colors.outlineVariant);
     
-    // Draw letter if exist
+    // Draw letter if it exists
     if (level > 0 && letter.isNotEmpty) {
       final textPainter = TextPainter(
         text: TextSpan(
@@ -188,7 +189,7 @@ class MorseTreePainter extends CustomPainter {
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
     }
     
-    if (level < 4) {
+    if (level < 4) {// Draw branches and child nodes recursively
       double nextspacing = spacing * 0.4;
       double direction = (path.startsWith('.')) ? -1 : 1; // Up for dot, down for dash
       if (level == 0) {
@@ -208,7 +209,7 @@ class MorseTreePainter extends CustomPainter {
           _drawNode(canvas, x + spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path.", size, colors);
           _drawBranch(canvas, x, y, x - spacing, y + (direction*verticalGap), paintLine("$path-", colors), "$path-");
           _drawNode(canvas, x - spacing, y + (direction*verticalGap), nextspacing, level + 1, "$path-", size, colors);
-          }
+          }// Optimal spacing and direction for branches based on level and path, in order to avoid overlap
         }
       } 
 
@@ -239,16 +240,16 @@ class MorseTreePainter extends CustomPainter {
     
     const double radius = 16;
 
-    // direction vector
+    // Direction vector
     final dx = x2 - x1;
     final dy = y2 - y1;
     final dist = sqrt(dx * dx + dy * dy);
 
-    // normalize
+    // Normalization
     final ux = dx / dist;
     final uy = dy / dist;
 
-    // start/end points shifted to circle edge
+    // Start/end points shifted to circle edge
     final start = Offset(
       x1 + ux * radius,
       y1 + uy * radius,
@@ -262,7 +263,7 @@ class MorseTreePainter extends CustomPainter {
     canvas.drawLine(start, end, p);
 
     
-    final textPainter = TextPainter(
+    final textPainter = TextPainter(// Label for the branch (dot or dash)
         text: TextSpan(
           text: targetPath.endsWith('.') ? '.' : '—',
           style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
@@ -273,7 +274,7 @@ class MorseTreePainter extends CustomPainter {
       final labelOffsetY = 5;
 
       textPainter.layout();
-      textPainter.paint(
+      textPainter.paint(// Position the label at the midpoint of the branch, with a slight vertical offset
         canvas,
         Offset((x1 + x2) / 2 - textPainter.width / 2, (y1 + y2) / 2 - textPainter.height / 2 + labelOffsetY),
       );
@@ -282,5 +283,5 @@ class MorseTreePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(MorseTreePainter oldDelegate) =>
-      oldDelegate.currentPath != currentPath;
+      oldDelegate.currentPath != currentPath;// Repaint only when the current path changes to optimize performance
 }

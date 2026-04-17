@@ -3,6 +3,8 @@ import 'package:meu_projeto/services/message_bus.dart';
 import 'package:meu_projeto/services/morse_decoder_service.dart';
 import '../services/words_decoder_service.dart' hide DeviceMorseDecoder;
 
+// Main screen for the Words writer mode, showing the word list and highlighting the current message
+
 class WordsWriterScreen extends StatefulWidget {
   final String deviceId;
 
@@ -26,7 +28,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
     ".-": "THANK YOU",
     "...": "GOOD",
     "---": "BAD"
-  };
+  };// Predefined word dictionary for the writer mode
 
   @override
   void initState() {
@@ -37,7 +39,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
   }
 
   @override
-  void dispose() {
+  void dispose() {// Dispose the Words decoder for this device when the screen is disposed to free resources
     WordsDecoderService().getDecoder(widget.deviceId)?.dispose();
     super.dispose();
   }
@@ -52,7 +54,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
           builder: (context, snapshot) {
             final currentMessage = snapshot.data ?? "";
 
-    return Scaffold(
+    return Scaffold(// Visual layout for the words writer screen
       appBar: AppBar(
         title: const Text("Writer Mode"),
       ),
@@ -75,7 +77,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
 
                     final isActive = currentPath == morse;
                     
-                    return AnimatedContainer(
+                    return AnimatedContainer(// Highlight the active word based on the recieved code from the Talky Buddy
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOut,
                       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -87,7 +89,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
                             : colors.surface,
                         borderRadius: BorderRadius.circular(12),
                       
-                          // 👇 glow effect
+                          // Glow effect
                           boxShadow: isActive
                               ? [
                                   BoxShadow(
@@ -159,7 +161,7 @@ class _WordsWriterScreenState extends State<WordsWriterScreen> {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               WordsDecoderService().clearMessage();
-              setState(() {}); // rebuild to reset currentPath display
+              setState(() {}); // Rebuild to reset currentPath display
             },
             child: const Icon(
               Icons.delete_outline,
