@@ -66,7 +66,7 @@ void loop() {
   if (value == 0 && !isPressing) {
     isPressing = true;
     pressStartTime = currentTime;
-    estadoTimeout = 0;   //getting data
+    estadoTimeout = 0; // Getting data
   }
 
   // Release the button
@@ -75,8 +75,8 @@ void loop() {
     unsigned long duration = currentTime - pressStartTime;
     uint8_t signal = 0;
 
-    if (duration >= 200 && duration < 1000) signal = 1;   //dot
-    else if (duration >= 1500) signal = 2;   //dash
+    if (duration >= 200 && duration < 1000) signal = 1; // Dot
+    else if (duration >= 1500) signal = 2; // Dash
 
     if (signal > 0) {
       sendSignal(signal);
